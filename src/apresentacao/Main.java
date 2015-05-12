@@ -5,7 +5,7 @@ import static logicajogo.Elemento.*;
 import logicajogo.Elemento;
 import logicajogo.Tabuleiro;
 
-public class MainVersao5 {
+public class Main {
 
 	public static void main(String[] args) {
 		final Elemento[][] disposicaoInicial1 = {
@@ -24,6 +24,13 @@ public class MainVersao5 {
 		Tabuleiro tabuleiro = new Tabuleiro(disposicaoInicial1);
 		tabuleiro.setSaida(new TelaJogo(tabuleiro, new FabricaIcones()));
 		tabuleiro.iniciarJogo();
+		
+		//TelaJogoHUD hud = new TelaJogoHUD(tabuleiro, new FabricaIcones());
+		//hud.iniciarJogo();
+		
+		//Tabuleiro tabuleiro = new Tabuleiro(disposicaoInicial1);
+		//tabuleiro.setSaida(new TelaJogoHUD(tabuleiro, new FabricaIcones()));
+		//tabuleiro.iniciarJogo();
 	}
 
 }

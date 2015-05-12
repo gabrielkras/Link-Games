@@ -71,8 +71,8 @@ public class Tabuleiro {
 	}
 
 	private void alterarElemento(Posicao posicao, Elemento e) {
-		matriz[posicao.getLinha()][posicao.getColuna()] = e;
-		saida.alterarElemento(posicao, e);
+			matriz[posicao.getLinha()][posicao.getColuna()] = e;
+			saida.alterarElemento(posicao, e);
 	}
 
 	private int quantidadeMacasRestantes() {
