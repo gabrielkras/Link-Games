@@ -29,8 +29,9 @@ public class TelaJogo implements SaidaJogo {
 	private FabricaIcones fabricaIcones;
 	private JFrame frame;
 	
-	private JPanel jogo;
-	private JPanel hud;
+	private JPanel jogo; // Tela Jogo
+	private JPanel hud; // Tela Hud
+	private JPanel container; // Container contendo as Estrutura Jogo e HUD
 	
 	
 
@@ -41,13 +42,15 @@ public class TelaJogo implements SaidaJogo {
 		frame = new JFrame();
 		
 		// Cria um Container
-		JPanel container = new JPanel();
+		container = new JPanel();
 		container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
 		
 		// Cria o JPanel do Jogo
 		jogo = new JPanel();
 		jogo.setLayout(new GridLayout(tabuleiro.getNumeroLinhas(), tabuleiro.getNumeroColunas()));
-		jogo.addKeyListener(new TecladoListener());
+		
+		//Adiciona a Detecção do Teclado
+		frame.addKeyListener(new TecladoListener());
 		
 		// Cria o JPanel do HUD
 		hud = new JPanel();
@@ -61,8 +64,7 @@ public class TelaJogo implements SaidaJogo {
 		//frame.setLayout(new GridLayout(tabuleiro.getNumeroLinhas(), tabuleiro.getNumeroColunas()));
 		//frame.addKeyListener(new TecladoListener());
 		
-		
-		
+		// Titulo do Game
 		frame.setTitle("Pamonha Games");
 
 		preencherTela();
@@ -94,7 +96,10 @@ public class TelaJogo implements SaidaJogo {
 		//jogo.add(a,indice);
 		//((JLabel) frame.getContentPane().getComponent(indice)).setIcon(fabricaIcones.obterIcone(elemento));
 		//((JLabel) jogo.getComponent(indice)).setIcon(fabricaIcones.obterIcone(elemento));
-		((JLabel) jogo.getComponent(indice)).setIcon(fabricaIcones.obterIcone(Elemento.GRAMA));
+		//jogo.getComponent(1);
+		jogo.remove(indice); // Remove a Imagem da Posicção
+		jogo.add(new JLabel(fabricaIcones.obterIcone(elemento)), indice); // Adiciona a nova imagem
+		jogo.updateUI();// Atualiza o JPanel
 	}
 
 	@Override

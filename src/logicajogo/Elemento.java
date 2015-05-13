@@ -2,11 +2,21 @@ package logicajogo;
 
 public enum Elemento {
 
-	AGUA("/agua.png"),
-	MACA("/maca.png"),
-	PERSONAGEM("/personagem.png"),
-	GRAMA("/grama.png"),
-	PORTAL("/passagem.png"),
+	AGUA("/agua2.png"),
+	MACA("/rubi.png"),
+	PERSONAGEM("/personagemdown.png"),
+	PERSONAGEMUP("/personagemup.png"),
+	PERSONAGEMDOWN("/personagemdown.png"),
+	PERSONAGEMLEFT("/personagemleft.png"),
+	PERSONAGEMRIGHT("/personagemright.png"),
+	
+	PERSONAGEMUPWATER("/personagemupwater.png"),
+	PERSONAGEMDOWNWATER("/personagemdownwater.png"),
+	PERSONAGEMRIGHTWATER("/personagemrightwater.png"),
+	PERSONAGEMLEFTWATER("/personagemleftwater.png"),
+	
+	GRAMA("/grama2.png"),
+	PORTAL("/portal2.png"),
 	NADA("/fundo.png"),
 	;
 

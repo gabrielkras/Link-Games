@@ -32,19 +32,155 @@ public class Tabuleiro {
 	}
 
 	public void fazerMovimento(Direcao d) {
-		Posicao posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEM);
-		Posicao posicaoNova = posicaoAntiga.somar(d);
+		
+		Posicao posicaoAntiga = null;
+		Posicao posicaoNova = null;
+		Elemento elementoAlcancado = null;
+		
+		/*if(acharPosicaoDe(Elemento.PERSONAGEM) != null){
+			posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEM);
+			posicaoNova = posicaoAntiga.somar(d);
+			if (posicaoEhInvalida(posicaoNova)) return;
 
-		if (posicaoEhInvalida(posicaoNova)) return;
+			elementoAlcancado = elementoEm(posicaoNova);
 
-		Elemento elementoAlcancado = elementoEm(posicaoNova);
+			alterarElemento(posicaoAntiga, Elemento.GRAMA);
+			alterarElemento(posicaoNova, Elemento.PERSONAGEM);
+		}*/
+		
+		//==== Troca de Imagem por diferentes direções de locomoção ===
+		if(Direcao.CIMA == d){
+				 if(acharPosicaoDe(Elemento.PERSONAGEM)!= null){
+					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEM);
+				 }
+				 else if(acharPosicaoDe(Elemento.PERSONAGEMUP)!= null){
+					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUP);
+				 }
+				 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWN)!= null){
+					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWN);
+				 }
+				 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFT)!= null){
+					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFT);
+				 }
+				 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHT)!= null){
+					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHT);
+				 }
+				posicaoNova = posicaoAntiga.somar(d);
+				if (posicaoEhInvalida(posicaoNova)) return;
 
-		alterarElemento(posicaoAntiga, Elemento.GRAMA);
-		alterarElemento(posicaoNova, Elemento.PERSONAGEM);
+				elementoAlcancado = elementoEm(posicaoNova);
+
+				alterarElemento(posicaoAntiga, Elemento.GRAMA);
+				alterarElemento(posicaoNova, Elemento.PERSONAGEMUP);
+			
+		}
+		else if(Direcao.BAIXO == d){
+			 if(acharPosicaoDe(Elemento.PERSONAGEM)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEM);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMUP)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUP);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWN)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWN);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFT)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFT);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHT)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHT);
+			 }
+			posicaoNova = posicaoAntiga.somar(d);
+			if (posicaoEhInvalida(posicaoNova)) return;
+
+			elementoAlcancado = elementoEm(posicaoNova);
+
+			alterarElemento(posicaoAntiga, Elemento.GRAMA);
+			alterarElemento(posicaoNova, Elemento.PERSONAGEMDOWN);
+		
+		}
+		else if(Direcao.ESQUERDA == d){
+			 if(acharPosicaoDe(Elemento.PERSONAGEM)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEM);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMUP)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUP);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWN)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWN);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFT)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFT);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHT)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHT);
+			 }
+			posicaoNova = posicaoAntiga.somar(d);
+			if (posicaoEhInvalida(posicaoNova)) return;
+
+			elementoAlcancado = elementoEm(posicaoNova);
+
+			alterarElemento(posicaoAntiga, Elemento.GRAMA);
+			alterarElemento(posicaoNova, Elemento.PERSONAGEMLEFT);
+		
+		}
+		else if(Direcao.DIREITA == d){
+			 if(acharPosicaoDe(Elemento.PERSONAGEM)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEM);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMUP)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUP);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWN)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWN);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFT)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFT);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHT)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHT);
+			 }
+			posicaoNova = posicaoAntiga.somar(d);
+			if (posicaoEhInvalida(posicaoNova)) return;
+
+			elementoAlcancado = elementoEm(posicaoNova);
+			
+			alterarElemento(posicaoAntiga, Elemento.GRAMA);
+			alterarElemento(posicaoNova, Elemento.PERSONAGEMRIGHT);
+		
+		}
+		//=======================//
+		
+		
+		
+		//Posicao posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEM);
+		//Posicao posicaoNova = posicaoAntiga.somar(d);
+
+		//if (posicaoEhInvalida(posicaoNova)) return;
+
+		//Elemento elementoAlcancado = elementoEm(posicaoNova);
+
+		//alterarElemento(posicaoAntiga, Elemento.GRAMA);
+		//alterarElemento(posicaoNova, Elemento.PERSONAGEM);
 
 		switch (elementoAlcancado) {
 		case AGUA:
-			saida.perderJogo();
+			if(Direcao.CIMA == d){
+				alterarElemento(posicaoNova, Elemento.PERSONAGEMUPWATER);
+				saida.perderJogo();
+			}
+			else if(Direcao.BAIXO == d){
+				alterarElemento(posicaoNova, Elemento.PERSONAGEMDOWNWATER);
+				saida.perderJogo();
+			}
+			else if(Direcao.ESQUERDA == d){
+				alterarElemento(posicaoNova, Elemento.PERSONAGEMLEFTWATER);
+				saida.perderJogo();
+			}
+			else if(Direcao.DIREITA == d){
+				alterarElemento(posicaoNova, Elemento.PERSONAGEMRIGHTWATER);
+				saida.perderJogo();
+			}
 			break;
 
 		case MACA:
