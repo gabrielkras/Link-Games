@@ -17,6 +17,8 @@ public enum Elemento {
 	
 	GRAMA("/grama2.png"),
 	PORTAL("/portal2.png"),
+	PASSAGEM("/fundo.png"),
+	PASSAGEMVOLTA("/fundo.png"),
 	NADA("/fundo.png"),
 	;
 
@@ -29,5 +31,5 @@ public enum Elemento {
 	public String getCaminhoImagem() {
 		return caminhoImagem;
 	}
-
+	
 }

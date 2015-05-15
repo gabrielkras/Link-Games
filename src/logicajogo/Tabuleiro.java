@@ -1,16 +1,19 @@
 package logicajogo;
 
+import apresentacao.TelaJogo;
+
 public class Tabuleiro {
 
-	private Elemento[][] matriz;
+	private Mapa mapa;
+	
 	private SaidaJogo saida;
 	private Posicao posicaoDoPortalOculto;
 
-	public Tabuleiro(Elemento[][] matriz) {
-		this.matriz = matriz;
+	public Tabuleiro(Mapa mapa) {
+		this.mapa = mapa;
 	}
 
-	public void setSaida(SaidaJogo saida) {
+	public void setSaida(TelaJogo saida) {
 		this.saida = saida;
 	}
 
@@ -20,15 +23,15 @@ public class Tabuleiro {
 	}
 
 	public int getNumeroLinhas() {
-		return matriz.length;
+		return mapa.getLinha();
 	}
 
 	public int getNumeroColunas() {
-		return matriz[0].length;
+		return mapa.getColuna();
 	}
 
 	public Elemento elementoEm(Posicao posicao) {
-		return matriz[posicao.getLinha()][posicao.getColuna()];
+		return mapa.getMapa()[posicao.getLinha()][posicao.getColuna()];
 	}
 
 	public void fazerMovimento(Direcao d) {
@@ -69,9 +72,23 @@ public class Tabuleiro {
 				if (posicaoEhInvalida(posicaoNova)) return;
 
 				elementoAlcancado = elementoEm(posicaoNova);
+				
+				
 
-				alterarElemento(posicaoAntiga, Elemento.GRAMA);
-				alterarElemento(posicaoNova, Elemento.PERSONAGEMUP);
+				Elemento elem = mapa.checarElementoPosicao(posicaoAntiga);
+				if(elementoAlcancado == Elemento.PASSAGEM){
+					alterarElemento(posicaoNova, Elemento.PASSAGEM);
+					alterarElemento(posicaoAntiga, elem);
+				}
+				else if(elementoAlcancado == Elemento.PASSAGEMVOLTA){
+					alterarElemento(posicaoNova, Elemento.PASSAGEMVOLTA);
+					alterarElemento(posicaoAntiga, elem);
+				}
+				else{
+					alterarElemento(posicaoAntiga, elem);
+					alterarElemento(posicaoNova, Elemento.PERSONAGEMUP);
+				}
+				
 			
 		}
 		else if(Direcao.BAIXO == d){
@@ -95,8 +112,20 @@ public class Tabuleiro {
 
 			elementoAlcancado = elementoEm(posicaoNova);
 
-			alterarElemento(posicaoAntiga, Elemento.GRAMA);
-			alterarElemento(posicaoNova, Elemento.PERSONAGEMDOWN);
+			//alterarElemento(posicaoAntiga, Elemento.GRAMA);
+			Elemento elem = mapa.checarElementoPosicao(posicaoAntiga);
+			if(elementoAlcancado == Elemento.PASSAGEM){
+				alterarElemento(posicaoNova, Elemento.PASSAGEM);
+				alterarElemento(posicaoAntiga, elem);
+			}
+			else if(elementoAlcancado == Elemento.PASSAGEMVOLTA){
+				alterarElemento(posicaoNova, Elemento.PASSAGEMVOLTA);
+				alterarElemento(posicaoAntiga, elem);
+			}
+			else{
+				alterarElemento(posicaoAntiga, elem);
+				alterarElemento(posicaoNova, Elemento.PERSONAGEMDOWN);
+			}
 		
 		}
 		else if(Direcao.ESQUERDA == d){
@@ -120,8 +149,21 @@ public class Tabuleiro {
 
 			elementoAlcancado = elementoEm(posicaoNova);
 
-			alterarElemento(posicaoAntiga, Elemento.GRAMA);
-			alterarElemento(posicaoNova, Elemento.PERSONAGEMLEFT);
+			//alterarElemento(posicaoAntiga, Elemento.GRAMA);
+			Elemento elem = mapa.checarElementoPosicao(posicaoAntiga);
+			if(elementoAlcancado == Elemento.PASSAGEM){
+				alterarElemento(posicaoNova, Elemento.PASSAGEM);
+				alterarElemento(posicaoAntiga, elem);
+			}
+			else if(elementoAlcancado == Elemento.PASSAGEMVOLTA){
+				alterarElemento(posicaoNova, Elemento.PASSAGEMVOLTA);
+				alterarElemento(posicaoAntiga, elem);
+			}
+			else{
+				alterarElemento(posicaoAntiga, elem);
+				alterarElemento(posicaoNova, Elemento.PERSONAGEMLEFT);
+			}
+			
 		
 		}
 		else if(Direcao.DIREITA == d){
@@ -140,13 +182,27 @@ public class Tabuleiro {
 			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHT)!= null){
 				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHT);
 			 }
+			 
 			posicaoNova = posicaoAntiga.somar(d);
 			if (posicaoEhInvalida(posicaoNova)) return;
 
 			elementoAlcancado = elementoEm(posicaoNova);
 			
-			alterarElemento(posicaoAntiga, Elemento.GRAMA);
-			alterarElemento(posicaoNova, Elemento.PERSONAGEMRIGHT);
+			//alterarElemento(posicaoAntiga, Elemento.GRAMA);
+			Elemento elem = mapa.checarElementoPosicao(posicaoAntiga);
+			alterarElemento(posicaoAntiga, elem);
+			if(elementoAlcancado == Elemento.PASSAGEM){
+				alterarElemento(posicaoNova, Elemento.PASSAGEM);
+				alterarElemento(posicaoAntiga, elem);
+			}
+			else if(elementoAlcancado == Elemento.PASSAGEMVOLTA){
+				alterarElemento(posicaoNova, Elemento.PASSAGEMVOLTA);
+				alterarElemento(posicaoAntiga, elem);
+			}
+			else{
+				alterarElemento(posicaoAntiga, elem);
+				alterarElemento(posicaoNova, Elemento.PERSONAGEMRIGHT);
+			}
 		
 		}
 		//=======================//
@@ -190,6 +246,20 @@ public class Tabuleiro {
 		case PORTAL:
 			saida.passarDeFase();
 			break;
+			
+		case PASSAGEM:
+			posicaoNova = posicaoNova.subtrair(d);
+			mapa.getMapa()[posicaoNova.getLinha()][posicaoNova.getColuna()] = Elemento.PERSONAGEM;
+			mapa.trocarMapa(mapa.getproxMapa());
+			saida.recarregarMapa();
+			break;
+		
+		case PASSAGEMVOLTA:
+			posicaoNova = posicaoNova.subtrair(d);
+			mapa.getMapa()[posicaoNova.getLinha()][posicaoNova.getColuna()] = Elemento.PERSONAGEM;
+			mapa.trocarMapa(mapa.getproxMapa()-1);
+			saida.recarregarMapa();
+			break;
 
 		default:
 			break;
@@ -207,16 +277,16 @@ public class Tabuleiro {
 	}
 
 	private void alterarElemento(Posicao posicao, Elemento e) {
-			matriz[posicao.getLinha()][posicao.getColuna()] = e;
+			mapa.getMapa()[posicao.getLinha()][posicao.getColuna()] = e;
 			saida.alterarElemento(posicao, e);
 	}
 
 	private int quantidadeMacasRestantes() {
 		int ret = 0;
 
-		for (int i = 0; i < matriz.length; i++) {
-			for (int j = 0; j < matriz[i].length; j++) {
-				if (matriz[i][j] == Elemento.MACA) ++ret;
+		for (int i = 0; i < mapa.getMapa().length; i++) {
+			for (int j = 0; j < mapa.getMapa()[i].length; j++) {
+				if (mapa.getMapa()[i][j] == Elemento.MACA) ++ret;
 			}
 		}
 
@@ -224,9 +294,9 @@ public class Tabuleiro {
 	}
 
 	private Posicao acharPosicaoDe(Elemento elemento) {
-		for (int i = 0; i < matriz.length; i++) {
-			for (int j = 0; j < matriz[i].length; j++) {
-				if (matriz[i][j] == elemento) {
+		for (int i = 0; i < mapa.getMapa().length; i++) {
+			for (int j = 0; j < mapa.getMapa()[i].length; j++) {
+				if (mapa.getMapa()[i][j] == elemento) {
 					return new Posicao(i, j);
 				}
 			}

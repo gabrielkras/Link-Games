@@ -51,5 +51,10 @@ public class Posicao {
 	public Posicao somar(Direcao d) {
 		return new Posicao(linha + d.getIncrementoLinha(), coluna + d.getIncrementoColuna());
 	}
+	
+	public Posicao subtrair(Direcao d){
+		return new Posicao(linha - d.getIncrementoLinha(), coluna - d.getIncrementoColuna());
+
+	}
 
 }

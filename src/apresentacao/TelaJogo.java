@@ -82,6 +82,15 @@ public class TelaJogo implements SaidaJogo {
 			}
 		}
 	}
+	
+	public void recarregarMapa(){
+		jogo.removeAll();
+		for (int i = 0; i < tabuleiro.getNumeroLinhas(); i++) {
+			for (int j = 0; j < tabuleiro.getNumeroColunas(); j++) {
+				 jogo.add(new JLabel(fabricaIcones.obterIcone(tabuleiro.elementoEm(new Posicao(i, j)))));
+			}
+		}
+	}
 
 	@Override
 	public void iniciarJogo() {

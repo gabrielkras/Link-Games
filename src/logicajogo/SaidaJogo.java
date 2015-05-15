@@ -9,5 +9,7 @@ public interface SaidaJogo {
 	void passarDeFase();
 
 	void perderJogo();
+	
+	void recarregarMapa();
 
 }
