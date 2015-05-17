@@ -19,6 +19,7 @@ import javax.swing.RootPaneContainer;
 
 import logicajogo.Direcao;
 import logicajogo.Elemento;
+import logicajogo.Hud;
 import logicajogo.Posicao;
 import logicajogo.SaidaJogo;
 import logicajogo.Tabuleiro;
@@ -30,7 +31,7 @@ public class TelaJogo implements SaidaJogo {
 	private JFrame frame;
 	
 	private JPanel jogo; // Tela Jogo
-	private JPanel hud; // Tela Hud
+	private Hud hud; // Tela Hud
 	private JPanel container; // Container contendo as Estrutura Jogo e HUD
 	
 	
@@ -53,10 +54,11 @@ public class TelaJogo implements SaidaJogo {
 		frame.addKeyListener(new TecladoListener());
 		
 		// Cria o JPanel do HUD
-		hud = new JPanel();
-		hud.add(new JLabel(fabricaIcones.obterIcone(Elemento.NADA)));
+		Hud hud = new Hud(tabuleiro);
+		tabuleiro.setHud(hud);
 		
-		container.add(hud);
+		
+		container.add(hud.getHud());
 		container.add(jogo);
 		
 		frame.add(container);
@@ -90,6 +92,10 @@ public class TelaJogo implements SaidaJogo {
 				 jogo.add(new JLabel(fabricaIcones.obterIcone(tabuleiro.elementoEm(new Posicao(i, j)))));
 			}
 		}
+	}
+	
+	public Hud getHud(){
+		return hud;
 	}
 
 	@Override

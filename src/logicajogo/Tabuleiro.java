@@ -1,5 +1,7 @@
 package logicajogo;
 
+import javax.swing.JLabel;
+
 import apresentacao.TelaJogo;
 
 public class Tabuleiro {
@@ -7,8 +9,8 @@ public class Tabuleiro {
 	private Mapa mapa;
 	
 	private SaidaJogo saida;
-	private Posicao posicaoDoPortalOculto;
-
+	private Hud hud;
+	
 	public Tabuleiro(Mapa mapa) {
 		this.mapa = mapa;
 	}
@@ -68,6 +70,21 @@ public class Tabuleiro {
 				 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHT)!= null){
 					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHT);
 				 }
+				 
+				 
+				 else if(acharPosicaoDe(Elemento.PERSONAGEMUPWATER)!= null){
+					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUPWATER);
+				 }
+				 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER)!= null){
+					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER);
+				 }
+				 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER)!= null){
+					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER);
+				 }
+				 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER)!= null){
+					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER);
+				 }
+				 
 				posicaoNova = posicaoAntiga.somar(d);
 				if (posicaoEhInvalida(posicaoNova)) return;
 
@@ -84,6 +101,19 @@ public class Tabuleiro {
 					alterarElemento(posicaoNova, Elemento.PASSAGEMVOLTA);
 					alterarElemento(posicaoAntiga, elem);
 				}
+				
+				else if(elementoAlcancado == Elemento.VIDA){
+					if(!hud.adicionarVida()){
+						alterarElemento(posicaoNova, Elemento.VIDA);
+						alterarElemento(posicaoNova.somar(d), Elemento.PERSONAGEMUP);
+						alterarElemento(posicaoAntiga, elem);
+					}
+					else{
+						alterarElemento(posicaoAntiga, elem);
+						alterarElemento(posicaoNova, Elemento.PERSONAGEMUP);
+					}
+				}
+				
 				else{
 					alterarElemento(posicaoAntiga, elem);
 					alterarElemento(posicaoNova, Elemento.PERSONAGEMUP);
@@ -107,6 +137,20 @@ public class Tabuleiro {
 			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHT)!= null){
 				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHT);
 			 }
+			 
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMUPWATER)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUPWATER);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER);
+			 }
+			 
 			posicaoNova = posicaoAntiga.somar(d);
 			if (posicaoEhInvalida(posicaoNova)) return;
 
@@ -122,6 +166,19 @@ public class Tabuleiro {
 				alterarElemento(posicaoNova, Elemento.PASSAGEMVOLTA);
 				alterarElemento(posicaoAntiga, elem);
 			}
+			
+			else if(elementoAlcancado == Elemento.VIDA){
+				if(!hud.adicionarVida()){
+					alterarElemento(posicaoNova, Elemento.VIDA);
+					alterarElemento(posicaoNova.somar(d), Elemento.PERSONAGEMDOWN);
+					alterarElemento(posicaoAntiga, elem);
+				}
+				else{
+					alterarElemento(posicaoAntiga, elem);
+					alterarElemento(posicaoNova, Elemento.PERSONAGEMDOWN);
+				}
+			}
+			
 			else{
 				alterarElemento(posicaoAntiga, elem);
 				alterarElemento(posicaoNova, Elemento.PERSONAGEMDOWN);
@@ -144,6 +201,20 @@ public class Tabuleiro {
 			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHT)!= null){
 				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHT);
 			 }
+			 
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMUPWATER)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUPWATER);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER);
+			 }
+			 
 			posicaoNova = posicaoAntiga.somar(d);
 			if (posicaoEhInvalida(posicaoNova)) return;
 
@@ -159,6 +230,19 @@ public class Tabuleiro {
 				alterarElemento(posicaoNova, Elemento.PASSAGEMVOLTA);
 				alterarElemento(posicaoAntiga, elem);
 			}
+			
+			else if(elementoAlcancado == Elemento.VIDA){
+				if(!hud.adicionarVida()){
+					alterarElemento(posicaoNova, Elemento.VIDA);
+					alterarElemento(posicaoNova.somar(d), Elemento.PERSONAGEMLEFT);
+					alterarElemento(posicaoAntiga, elem);
+				}
+				else{
+					alterarElemento(posicaoAntiga, elem);
+					alterarElemento(posicaoNova, Elemento.PERSONAGEMLEFT);
+				}
+			}
+			
 			else{
 				alterarElemento(posicaoAntiga, elem);
 				alterarElemento(posicaoNova, Elemento.PERSONAGEMLEFT);
@@ -183,6 +267,19 @@ public class Tabuleiro {
 				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHT);
 			 }
 			 
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMUPWATER)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUPWATER);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER);
+			 }
+			 
 			posicaoNova = posicaoAntiga.somar(d);
 			if (posicaoEhInvalida(posicaoNova)) return;
 
@@ -199,14 +296,29 @@ public class Tabuleiro {
 				alterarElemento(posicaoNova, Elemento.PASSAGEMVOLTA);
 				alterarElemento(posicaoAntiga, elem);
 			}
+			
+			else if(elementoAlcancado == Elemento.VIDA){
+				if(!hud.adicionarVida()){
+					alterarElemento(posicaoNova, Elemento.VIDA);
+					alterarElemento(posicaoNova.somar(d), Elemento.PERSONAGEMRIGHT);
+					alterarElemento(posicaoAntiga, elem);
+				}
+				else{
+					alterarElemento(posicaoAntiga, elem);
+					alterarElemento(posicaoNova, Elemento.PERSONAGEMRIGHT);
+				}
+			}
+			
 			else{
 				alterarElemento(posicaoAntiga, elem);
 				alterarElemento(posicaoNova, Elemento.PERSONAGEMRIGHT);
 			}
-		
 		}
 		//=======================//
 		
+		if(hud.getPontuacao() >= mapa.obterQuantidadeTotalDePontosNoMapa()){
+			reexibirPortal();
+		}
 		
 		
 		//Posicao posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEM);
@@ -223,24 +335,54 @@ public class Tabuleiro {
 		case AGUA:
 			if(Direcao.CIMA == d){
 				alterarElemento(posicaoNova, Elemento.PERSONAGEMUPWATER);
-				saida.perderJogo();
+				if(hud.getVida() > 1){
+					hud.removerVida();
+					//saida.recarregarMapa();
+				}
+				else{
+					hud.removerVida();
+					saida.perderJogo();
+				}
+				
 			}
 			else if(Direcao.BAIXO == d){
 				alterarElemento(posicaoNova, Elemento.PERSONAGEMDOWNWATER);
-				saida.perderJogo();
+				if(hud.getVida() > 1){
+					hud.removerVida();
+					//saida.recarregarMapa();
+				}
+				else{
+					hud.removerVida();
+					saida.perderJogo();
+				}
 			}
 			else if(Direcao.ESQUERDA == d){
 				alterarElemento(posicaoNova, Elemento.PERSONAGEMLEFTWATER);
-				saida.perderJogo();
+				if(hud.getVida() > 1){
+					hud.removerVida();
+					//saida.recarregarMapa();
+				}
+				else{
+					hud.removerVida();
+					saida.perderJogo();
+				}
 			}
 			else if(Direcao.DIREITA == d){
 				alterarElemento(posicaoNova, Elemento.PERSONAGEMRIGHTWATER);
-				saida.perderJogo();
+				if(hud.getVida() > 1){
+					hud.removerVida();
+					//saida.recarregarMapa();
+				}
+				else{
+					hud.removerVida();
+					saida.perderJogo();
+				}
 			}
 			break;
 
 		case MACA:
-			if (quantidadeMacasRestantes() == 0) reexibirPortal();
+			hud.incrementarPontuacao();
+		
 			break;
 
 		case PORTAL:
@@ -250,30 +392,46 @@ public class Tabuleiro {
 		case PASSAGEM:
 			posicaoNova = posicaoNova.subtrair(d);
 			mapa.getMapa()[posicaoNova.getLinha()][posicaoNova.getColuna()] = Elemento.PERSONAGEM;
-			mapa.trocarMapa(mapa.getproxMapa());
+			mapa.avancarUmMapa();
+			if(hud.getPontuacao() >= mapa.obterQuantidadeTotalDePontosNoMapa()){
+				reexibirPortal();
+			}
 			saida.recarregarMapa();
+			
 			break;
 		
 		case PASSAGEMVOLTA:
 			posicaoNova = posicaoNova.subtrair(d);
 			mapa.getMapa()[posicaoNova.getLinha()][posicaoNova.getColuna()] = Elemento.PERSONAGEM;
-			mapa.trocarMapa(mapa.getproxMapa()-1);
+			mapa.retrocederUmMapa();
+			if(hud.getPontuacao() >= mapa.obterQuantidadeTotalDePontosNoMapa()){
+				reexibirPortal();
+			}
 			saida.recarregarMapa();
 			break;
+			
+		case VIDA:
+			hud.adicionarVida();
 
 		default:
 			break;
 		}
 
 	}
+	
+	public void setHud(Hud hud){
+		this.hud = hud;
+	}
 
 	private void ocultarPortal() {
-		posicaoDoPortalOculto = acharPosicaoDe(Elemento.PORTAL);
-		alterarElemento(posicaoDoPortalOculto, Elemento.GRAMA);
+		alterarElemento(mapa.obterPosicaoPortalMapa(), Elemento.GRAMA);
 	}
 
 	private void reexibirPortal() {
-		alterarElemento(posicaoDoPortalOculto, Elemento.PORTAL);
+		if(mapa.temPortalNoMapa()==true){
+			alterarElemento(mapa.obterPosicaoPortalMapa(), Elemento.PORTAL);
+		}
+		
 	}
 
 	private void alterarElemento(Posicao posicao, Elemento e) {

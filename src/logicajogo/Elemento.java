@@ -19,7 +19,12 @@ public enum Elemento {
 	PORTAL("/portal2.png"),
 	PASSAGEM("/fundo.png"),
 	PASSAGEMVOLTA("/fundo.png"),
-	NADA("/fundo.png"),
+	NADA("/nada.png"),
+	
+	// PARA O HUD,
+	VIDA("/coracao.png"),
+	SEMVIDA("/coracao2.png")
+	
 	;
 
 	private final String caminhoImagem;
