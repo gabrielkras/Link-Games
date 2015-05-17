@@ -19,6 +19,7 @@ public enum Elemento {
 	PORTAL("/portal2.png"),
 	PASSAGEM("/fundo.png"),
 	PASSAGEMVOLTA("/fundo.png"),
+	PAREDE("/parede1.png"),
 	NADA("/nada.png"),
 	
 	// PARA O HUD,

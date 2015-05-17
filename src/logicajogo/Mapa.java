@@ -161,6 +161,8 @@ public class Mapa {
 			return Elemento.VIDA;
 		}
 		
+		
+		
 		//else if(tab.elementoEm(pos) == Elemento.PORTAL){
 			//return Elemento.GRAMA;
 		//}
@@ -180,6 +182,48 @@ public class Mapa {
 		else{
 			return tab.elementoEm(pos);
 		}
+	}
+	
+	// Permite devolver um possivel personagem a sua posição antiga, no caso de ser parede
+	
+	public Elemento checarElementoPosicao(Posicao pos, Posicao pos2, Direcao d){
+		Tabuleiro tab = new Tabuleiro(new Mapa(mapa));
+		
+		if(d == Direcao.CIMA){
+			if((tab.elementoEm(pos) == Elemento.AGUA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
+				return Elemento.PERSONAGEMUPWATER;
+			}
+			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
+				return Elemento.PERSONAGEMUP;
+			}
+		}
+		else if(d == Direcao.BAIXO){
+			if((tab.elementoEm(pos) == Elemento.AGUA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
+				return Elemento.PERSONAGEMDOWNWATER;
+			}
+			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
+				return Elemento.PERSONAGEMDOWN;
+			}
+		}
+		
+		else if(d == Direcao.DIREITA){
+			if((tab.elementoEm(pos) == Elemento.AGUA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
+				return Elemento.PERSONAGEMRIGHTWATER;
+			}
+			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
+				return Elemento.PERSONAGEMRIGHT;
+			}
+		}
+		
+		else if(d == Direcao.ESQUERDA){
+			if((tab.elementoEm(pos) == Elemento.AGUA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
+				return Elemento.PERSONAGEMLEFTWATER;
+			}
+			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
+				return Elemento.PERSONAGEMLEFT;
+			}
+		}
+		return tab.elementoEm(pos); 
 	}
 
 }

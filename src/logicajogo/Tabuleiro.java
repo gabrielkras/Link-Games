@@ -102,6 +102,11 @@ public class Tabuleiro {
 					alterarElemento(posicaoAntiga, elem);
 				}
 				
+				else if(elementoAlcancado == Elemento.PAREDE){
+					alterarElemento(posicaoNova, Elemento.PAREDE);
+					alterarElemento(posicaoAntiga,mapa.checarElementoPosicao(posicaoAntiga,posicaoNova,d));
+				}
+				
 				else if(elementoAlcancado == Elemento.VIDA){
 					if(!hud.adicionarVida()){
 						alterarElemento(posicaoNova, Elemento.VIDA);
@@ -165,6 +170,11 @@ public class Tabuleiro {
 			else if(elementoAlcancado == Elemento.PASSAGEMVOLTA){
 				alterarElemento(posicaoNova, Elemento.PASSAGEMVOLTA);
 				alterarElemento(posicaoAntiga, elem);
+			}
+			
+			else if(elementoAlcancado == Elemento.PAREDE){
+				alterarElemento(posicaoNova, Elemento.PAREDE);
+				alterarElemento(posicaoAntiga,mapa.checarElementoPosicao(posicaoAntiga,posicaoNova,d));
 			}
 			
 			else if(elementoAlcancado == Elemento.VIDA){
@@ -231,6 +241,11 @@ public class Tabuleiro {
 				alterarElemento(posicaoAntiga, elem);
 			}
 			
+			else if(elementoAlcancado == Elemento.PAREDE){
+				alterarElemento(posicaoNova, Elemento.PAREDE);
+				alterarElemento(posicaoAntiga,mapa.checarElementoPosicao(posicaoAntiga,posicaoNova,d));
+			}
+			
 			else if(elementoAlcancado == Elemento.VIDA){
 				if(!hud.adicionarVida()){
 					alterarElemento(posicaoNova, Elemento.VIDA);
@@ -280,6 +295,8 @@ public class Tabuleiro {
 				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER);
 			 }
 			 
+			 
+			 
 			posicaoNova = posicaoAntiga.somar(d);
 			if (posicaoEhInvalida(posicaoNova)) return;
 
@@ -295,6 +312,11 @@ public class Tabuleiro {
 			else if(elementoAlcancado == Elemento.PASSAGEMVOLTA){
 				alterarElemento(posicaoNova, Elemento.PASSAGEMVOLTA);
 				alterarElemento(posicaoAntiga, elem);
+			}
+			
+			else if(elementoAlcancado == Elemento.PAREDE){
+				alterarElemento(posicaoNova, Elemento.PAREDE);
+				alterarElemento(posicaoAntiga,mapa.checarElementoPosicao(posicaoAntiga,posicaoNova,d));
 			}
 			
 			else if(elementoAlcancado == Elemento.VIDA){
@@ -412,7 +434,11 @@ public class Tabuleiro {
 			
 		case VIDA:
 			hud.adicionarVida();
-
+			break;
+			
+		//case PAREDE:
+			//posicaoNova = posicaoNova.subtrair(d);
+			//alterarElemento(posicaoAntiga, );
 		default:
 			break;
 		}
