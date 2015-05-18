@@ -15,7 +15,19 @@ public enum Elemento {
 	PERSONAGEMRIGHTWATER("/personagemrightwater.png"),
 	PERSONAGEMLEFTWATER("/personagemleftwater.png"),
 	
+//	PERSONAGEMUPDIRTY("/personagemup.png"),
+//	PERSONAGEMDOWNDIRTY("/personagemdown.png"),
+//	PERSONAGEMLEFTDIRTY("/personagemleft.png"),
+//	PERSONAGEMRIGHTDIRTY("/personagemright.png"),
+	
+	PERSONAGEMUPDIRTY("/maca.png"),
+	PERSONAGEMDOWNDIRTY("/maca.png"),
+	PERSONAGEMLEFTDIRTY("/maca.png"),
+	PERSONAGEMRIGHTDIRTY("/maca.png"),
+	
+	
 	GRAMA("/grama2.png"),
+	TERRA("/terra.png"),
 	PORTAL("/portal2.png"),
 	PASSAGEM("/fundo.png"),
 	PASSAGEMVOLTA("/fundo.png"),

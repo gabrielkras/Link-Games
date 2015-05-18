@@ -10,6 +10,7 @@ public class Tabuleiro {
 	
 	private SaidaJogo saida;
 	private Hud hud;
+	private Movimentacao mov;
 	
 	public Tabuleiro(Mapa mapa) {
 		this.mapa = mapa;
@@ -35,6 +36,11 @@ public class Tabuleiro {
 	public Elemento elementoEm(Posicao posicao) {
 		return mapa.getMapa()[posicao.getLinha()][posicao.getColuna()];
 	}
+	
+//	public void fazerMovimento(Direcao d){
+//		this.mov = new Movimentacao(this,mapa,hud,this.saida);
+//		mov.fazerMovimento(d);
+//	}
 
 	public void fazerMovimento(Direcao d) {
 		
@@ -85,6 +91,19 @@ public class Tabuleiro {
 					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER);
 				 }
 				 
+				 else if(acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY)!= null){
+					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY);
+				 }
+				 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY)!= null){
+					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY);
+				 }
+				 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY)!= null){
+					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY);
+				 }
+				 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY)!= null){
+					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY);
+				 }
+				 
 				posicaoNova = posicaoAntiga.somar(d);
 				if (posicaoEhInvalida(posicaoNova)) return;
 
@@ -105,6 +124,21 @@ public class Tabuleiro {
 				else if(elementoAlcancado == Elemento.PAREDE){
 					alterarElemento(posicaoNova, Elemento.PAREDE);
 					alterarElemento(posicaoAntiga,mapa.checarElementoPosicao(posicaoAntiga,posicaoNova,d));
+				}
+				
+				else if(elementoAlcancado == Elemento.TERRA){
+					if(elementoEm(posicaoAntiga) == Elemento.GRAMA){
+						alterarElemento(posicaoNova, Elemento.PERSONAGEMUPDIRTY);
+						alterarElemento(posicaoAntiga,Elemento.GRAMA);
+					}
+					else if(elementoEm(posicaoAntiga) == Elemento.AGUA){
+						alterarElemento(posicaoNova, Elemento.PERSONAGEMUPDIRTY);
+						alterarElemento(posicaoAntiga,Elemento.AGUA);
+					}
+					else{
+						alterarElemento(posicaoNova, Elemento.PERSONAGEMUPDIRTY);
+						alterarElemento(posicaoAntiga,Elemento.TERRA);
+					}
 				}
 				
 				else if(elementoAlcancado == Elemento.VIDA){
@@ -155,6 +189,18 @@ public class Tabuleiro {
 			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER)!= null){
 				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER);
 			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY);
+			 }
 			 
 			posicaoNova = posicaoAntiga.somar(d);
 			if (posicaoEhInvalida(posicaoNova)) return;
@@ -175,6 +221,20 @@ public class Tabuleiro {
 			else if(elementoAlcancado == Elemento.PAREDE){
 				alterarElemento(posicaoNova, Elemento.PAREDE);
 				alterarElemento(posicaoAntiga,mapa.checarElementoPosicao(posicaoAntiga,posicaoNova,d));
+			}
+			else if(elementoAlcancado == Elemento.TERRA){
+				if(elementoEm(posicaoAntiga) == Elemento.GRAMA){
+					alterarElemento(posicaoNova, Elemento.PERSONAGEMDOWNDIRTY);
+					alterarElemento(posicaoAntiga,Elemento.GRAMA);
+				}
+				else if(elementoEm(posicaoAntiga) == Elemento.AGUA){
+					alterarElemento(posicaoNova, Elemento.PERSONAGEMDOWNDIRTY);
+					alterarElemento(posicaoAntiga,Elemento.AGUA);
+				}
+				else{
+					alterarElemento(posicaoNova, Elemento.PERSONAGEMDOWNDIRTY);
+					alterarElemento(posicaoAntiga,Elemento.TERRA);
+				}
 			}
 			
 			else if(elementoAlcancado == Elemento.VIDA){
@@ -225,6 +285,19 @@ public class Tabuleiro {
 				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER);
 			 }
 			 
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY);
+			 }
+			 
 			posicaoNova = posicaoAntiga.somar(d);
 			if (posicaoEhInvalida(posicaoNova)) return;
 
@@ -244,6 +317,21 @@ public class Tabuleiro {
 			else if(elementoAlcancado == Elemento.PAREDE){
 				alterarElemento(posicaoNova, Elemento.PAREDE);
 				alterarElemento(posicaoAntiga,mapa.checarElementoPosicao(posicaoAntiga,posicaoNova,d));
+			}
+			
+			else if(elementoAlcancado == Elemento.TERRA){
+				if(elementoEm(posicaoAntiga) == Elemento.GRAMA){
+					alterarElemento(posicaoNova, Elemento.PERSONAGEMLEFTDIRTY);
+					alterarElemento(posicaoAntiga,Elemento.GRAMA);
+				}
+				else if(elementoEm(posicaoAntiga) == Elemento.AGUA){
+					alterarElemento(posicaoNova, Elemento.PERSONAGEMLEFTDIRTY);
+					alterarElemento(posicaoAntiga,Elemento.AGUA);
+				}
+				else{
+					alterarElemento(posicaoNova, Elemento.PERSONAGEMLEFTDIRTY);
+					alterarElemento(posicaoAntiga,Elemento.TERRA);
+				}
 			}
 			
 			else if(elementoAlcancado == Elemento.VIDA){
@@ -295,6 +383,19 @@ public class Tabuleiro {
 				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER);
 			 }
 			 
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY);
+			 }
+			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY)!= null){
+				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY);
+			 }
+			 
 			 
 			 
 			posicaoNova = posicaoAntiga.somar(d);
@@ -317,6 +418,21 @@ public class Tabuleiro {
 			else if(elementoAlcancado == Elemento.PAREDE){
 				alterarElemento(posicaoNova, Elemento.PAREDE);
 				alterarElemento(posicaoAntiga,mapa.checarElementoPosicao(posicaoAntiga,posicaoNova,d));
+			}
+			
+			else if(elementoAlcancado == Elemento.TERRA){
+				if(elementoEm(posicaoAntiga) == Elemento.GRAMA){
+					alterarElemento(posicaoNova, Elemento.PERSONAGEMRIGHTDIRTY);
+					alterarElemento(posicaoAntiga,Elemento.GRAMA);
+				}
+				else if(elementoEm(posicaoAntiga) == Elemento.AGUA){
+					alterarElemento(posicaoNova, Elemento.PERSONAGEMRIGHTDIRTY);
+					alterarElemento(posicaoAntiga,Elemento.AGUA);
+				}
+				else{
+					alterarElemento(posicaoNova, Elemento.PERSONAGEMRIGHTDIRTY);
+					alterarElemento(posicaoAntiga,Elemento.TERRA);
+				}
 			}
 			
 			else if(elementoAlcancado == Elemento.VIDA){
@@ -453,14 +569,14 @@ public class Tabuleiro {
 		alterarElemento(mapa.obterPosicaoPortalMapa(), Elemento.GRAMA);
 	}
 
-	private void reexibirPortal() {
+	void reexibirPortal() {
 		if(mapa.temPortalNoMapa()==true){
 			alterarElemento(mapa.obterPosicaoPortalMapa(), Elemento.PORTAL);
 		}
 		
 	}
 
-	private void alterarElemento(Posicao posicao, Elemento e) {
+	void alterarElemento(Posicao posicao, Elemento e) {
 			mapa.getMapa()[posicao.getLinha()][posicao.getColuna()] = e;
 			saida.alterarElemento(posicao, e);
 	}
@@ -477,7 +593,7 @@ public class Tabuleiro {
 		return ret;
 	}
 
-	private Posicao acharPosicaoDe(Elemento elemento) {
+	Posicao acharPosicaoDe(Elemento elemento) {
 		for (int i = 0; i < mapa.getMapa().length; i++) {
 			for (int j = 0; j < mapa.getMapa()[i].length; j++) {
 				if (mapa.getMapa()[i][j] == elemento) {

@@ -6,7 +6,9 @@ import java.util.List;
 import com.sun.corba.se.impl.oa.toa.TOA;
 
 /**
- * Classe Responsável por gerenciar os mapas
+ * A classe mapa é responsável por:
+ * - Gerenciar Mapa com Multiplas Salas
+ * - Gerenciar a troca de Icones no Mapa
  *  
  * */
 public class Mapa {
@@ -18,7 +20,6 @@ public class Mapa {
 	private int linha;
 	private int coluna;
 	private int totalDePontosNoMapa = 0;
-	private static int proxMapa;
 	
 	public Mapa(Elemento[][] mapa){
 		
@@ -26,13 +27,13 @@ public class Mapa {
 		listaMapa.add(mapa);
 		linha = mapa.length;
 		coluna = mapa[0].length;
-		proxMapa = listaMapa.size();
 		calcularQuantidadeTotalDePontosNoMapa();
 		armazenarPosicaoPortalMapa();
 		System.out.println(totalDePontosNoMapa);
 	}
 	
-	
+	/**
+	 * Método que retorna o mapa atual que esta sendo utilizado*/
 	public Elemento[][] getMapa(){
 		return this.mapa;
 	}
@@ -44,36 +45,33 @@ public class Mapa {
 	public int getColuna(){
 		return coluna;
 	}
-	
+	/**
+	 * Adiciona Mapas que compõem as salas extras do mapa principal*/
 	public void adicionarMapas(Elemento[][] mapa){
 		listaMapa.add(mapa);
 	}
 	/**
-	 * Permite realizar a troca de mapas, trocando o mapa atual "mapa", pelo mapa 
-	 * armazenado na lista de mapas 
-	 * @param int index*/
+	 * Realiza a troca do mapa, avançando para o proximo da lista*/
 	public void avancarUmMapa(){
 		indiceMapaAtual++;
 		this.mapa = listaMapa.get(indiceMapaAtual);
 	}
-	
+	/**
+	 * Realiza a Troca do Mapa, retrocedendo para o mapa anterior*/
 	public void retrocederUmMapa(){
 		indiceMapaAtual--;
 		this.mapa = listaMapa.get(indiceMapaAtual);
 	}
 	
-	public int getproxMapa(){
-		return proxMapa;
-	}
-	
-	public int setproxMapa(int index){
-		return proxMapa = index;
-	}
-	
+	/**
+	 * Retorna a quantidade total de "Macas" do mapa*/
 	public int obterQuantidadeTotalDePontosNoMapa(){
 		return totalDePontosNoMapa-1;
 	}
-	
+	/**
+	 * Verifica se o mapa atual, possui ou não um portal*
+	 * @return boolean
+	 */
 	public boolean temPortalNoMapa(){
 		try{
 			posicaoPortais.get(indiceMapaAtual);
@@ -85,11 +83,16 @@ public class Mapa {
 		
 	}
 	
+	/**
+	 * Função responsável por retornar a posicao do portal
+	 * no mapa atual
+	 * @return Posicao*/
 	public Posicao obterPosicaoPortalMapa(){
 			return posicaoPortais.get(indiceMapaAtual);
 		
 	}
-	
+	/**
+	 * Efetua a varredura de todos os mapas e armazena as posições dos portais*/
 	private void armazenarPosicaoPortalMapa(){
 		int tamanhoLista = listaMapa.size();
 		for(int k = 0; k < tamanhoLista; k++){
@@ -113,6 +116,8 @@ public class Mapa {
 		}
 	}
 	
+	/**
+	 * Realiza o calculo da quantidade total de macas que o mapa possui*/
 	private void calcularQuantidadeTotalDePontosNoMapa(){
 		for(int k = 0; k < linha; k++){
 			for(int l = 0; l < coluna; l++){
@@ -134,6 +139,11 @@ public class Mapa {
 		}
 	}
 	
+	/**
+	 * Método responsável por encontrar a posição do personagem no mapa
+	 * @param Direcao d
+	 * @return posicaoAntiga*/
+	
 	public Elemento checarElementoPosicao(Posicao pos){
 		Tabuleiro tab = new Tabuleiro(new Mapa(mapa));
 		if(tab.elementoEm(pos) == Elemento.PERSONAGEM){
@@ -150,6 +160,19 @@ public class Mapa {
 		}
 		else if(tab.elementoEm(pos) == Elemento.PERSONAGEMRIGHT){
 			return Elemento.GRAMA;
+		}
+		
+		else if(tab.elementoEm(pos) == Elemento.PERSONAGEMUPDIRTY){
+			return Elemento.TERRA;
+		}
+		else if(tab.elementoEm(pos) == Elemento.PERSONAGEMDOWNDIRTY){
+			return Elemento.TERRA;
+		}
+		else if(tab.elementoEm(pos) == Elemento.PERSONAGEMLEFTDIRTY){
+			return Elemento.TERRA;
+		}
+		else if(tab.elementoEm(pos) == Elemento.PERSONAGEMRIGHTDIRTY){
+			return Elemento.TERRA;
 		}
 		
 		
@@ -196,6 +219,9 @@ public class Mapa {
 			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
 				return Elemento.PERSONAGEMUP;
 			}
+			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.TERRA)){
+				return Elemento.PERSONAGEMUPDIRTY;
+			}
 		}
 		else if(d == Direcao.BAIXO){
 			if((tab.elementoEm(pos) == Elemento.AGUA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
@@ -203,6 +229,9 @@ public class Mapa {
 			}
 			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
 				return Elemento.PERSONAGEMDOWN;
+			}
+			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.TERRA)){
+				return Elemento.PERSONAGEMDOWNDIRTY;
 			}
 		}
 		
@@ -213,6 +242,9 @@ public class Mapa {
 			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
 				return Elemento.PERSONAGEMRIGHT;
 			}
+			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.TERRA)){
+				return Elemento.PERSONAGEMRIGHTDIRTY;
+			}
 		}
 		
 		else if(d == Direcao.ESQUERDA){
@@ -221,6 +253,9 @@ public class Mapa {
 			}
 			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
 				return Elemento.PERSONAGEMLEFT;
+			}
+			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.TERRA)){
+				return Elemento.PERSONAGEMLEFTDIRTY;
 			}
 		}
 		return tab.elementoEm(pos); 
