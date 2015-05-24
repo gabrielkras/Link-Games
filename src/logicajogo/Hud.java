@@ -36,19 +36,13 @@ public class Hud {
 		hud.setBackground(Color.GRAY);
 		this.tabuleiro = tabuleiro;
 		this.fabricaIcones = new FabricaIcones();
-		
 		gerarHud();
-		
-		
-		
-		
 	}
 	
 	private void gerarHud(){
 		adicionarIconeExperiencia();
 		adicionarIconeVidaCheia();
 		preencherEspacosVazios();
-		
 	}
 	
 	private void preencherEspacosVazios(){
@@ -79,7 +73,7 @@ public class Hud {
 		
 		Font font = new Font("SansSerif", Font.BOLD, 40);
 		Font font2 = new Font("SansSerif", Font.BOLD, 35);
-		hud.add(new JLabel(fabricaIcones.obterIcone(Elemento.MACA)));
+		hud.add(new JLabel(fabricaIcones.obterIcone(Elemento.RUBI)));
 		JLabel labelX = new JLabel();
 		labelPontos = new JLabel();
 		labelPontos.setForeground(Color.WHITE);
@@ -108,6 +102,15 @@ public class Hud {
 			vidas.set(vida, new JLabel(fabricaIcones.obterIcone(Elemento.VIDA)));
 			vida = vida + 1;
 			atualizarHud();
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+	
+	public boolean vidaEstaCheia(){
+		if(vida >= quantidadeDeVidaInicial){
 			return true;
 		}
 		else{

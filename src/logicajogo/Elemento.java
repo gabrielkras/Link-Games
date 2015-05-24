@@ -2,52 +2,75 @@ package logicajogo;
 
 public enum Elemento {
 
-	AGUA("/agua2.png"),
-	MACA("/rubi.png"),
-	PERSONAGEM("/personagemdown.png"),
-	PERSONAGEMUP("/personagemup.png"),
-	PERSONAGEMDOWN("/personagemdown.png"),
-	PERSONAGEMLEFT("/personagemleft.png"),
-	PERSONAGEMRIGHT("/personagemright.png"),
 	
-	PERSONAGEMUPWATER("/personagemupwater.png"),
-	PERSONAGEMDOWNWATER("/personagemdownwater.png"),
-	PERSONAGEMRIGHTWATER("/personagemrightwater.png"),
-	PERSONAGEMLEFTWATER("/personagemleftwater.png"),
+	//ELEMENTOS DO MAPA(AMBIENTE)
+	// caverna
+	PAREDECAVERNACANTO1("/canto_caverna.jpg",false),
+	PAREDECAVERNACANTO2("/canto_caverna2.jpg",false),
+	PAREDECAVERNACANTO3("/canto_caverna3.jpg",false),
+	PAREDECAVERNACANTO4("/canto_caverna4.jpg",false),
+	PAREDECAVERNACANTOESQUERDO("/meio_lateral2_caverna.jpg",false),
+	PAREDECAVERNACANTODIREITO("/meio_lateral1_caverna.jpg",false),
+	PAREDECAVERNACANTOSUPERIOR("/meio_superior_caverna.jpg",false),
+	PAREDECAVERNACANTOINFERIOR("/meio_inferior_caverna.jpg",false),
+	TERRACAVERNA("/chao_caverna",true),
 	
-//	PERSONAGEMUPDIRTY("/personagemup.png"),
-//	PERSONAGEMDOWNDIRTY("/personagemdown.png"),
-//	PERSONAGEMLEFTDIRTY("/personagemleft.png"),
-//	PERSONAGEMRIGHTDIRTY("/personagemright.png"),
+	// normal
+	AGUA("/agua2.png",true),
+	GRAMA("/grama2.png",true),
+	TERRA("/terra.png",true),
 	
-	PERSONAGEMUPDIRTY("/maca.png"),
-	PERSONAGEMDOWNDIRTY("/maca.png"),
-	PERSONAGEMLEFTDIRTY("/maca.png"),
-	PERSONAGEMRIGHTDIRTY("/maca.png"),
+	//ELEMENTOS DE PONTUAÇÃO
+	RUBI("/rubi.png",true),
+	
+	//ELEMENTOS / ITENS
+	VIDA("/coracao.png",true),
+	SEMVIDA("/coracao2.png",true),
+	
+	//SPTITES PERSONAGEM
+	// grama
+	PERSONAGEM("/personagemdown.png",false),
+	PERSONAGEMUP("/personagemup.png",false),
+	PERSONAGEMDOWN("/personagemdown.png",false),
+	PERSONAGEMLEFT("/personagemleft.png",false),
+	PERSONAGEMRIGHT("/personagemright.png",false),
+	// agua
+	PERSONAGEMUPWATER("/personagemupwater.png",false),
+	PERSONAGEMDOWNWATER("/personagemdownwater.png",false),
+	PERSONAGEMRIGHTWATER("/personagemrightwater.png",false),
+	PERSONAGEMLEFTWATER("/personagemleftwater.png",false),
+	// terra
+	PERSONAGEMUPDIRTY("/maca.png",false),
+	PERSONAGEMDOWNDIRTY("/maca.png",false),
+	PERSONAGEMLEFTDIRTY("/maca.png",false),
+	PERSONAGEMRIGHTDIRTY("/maca.png",false),
 	
 	
-	GRAMA("/grama2.png"),
-	TERRA("/terra.png"),
-	PORTAL("/portal2.png"),
-	PASSAGEM("/fundo.png"),
-	PASSAGEMVOLTA("/fundo.png"),
-	PAREDE("/parede1.png"),
-	NADA("/nada.png"),
+	//DEMAIS ELEMENTOS
+	PORTAL("/portal2.png",true),
+	PASSAGEM("/entrada caverna.jpg",false),
+	PASSAGEMVOLTA("/fundo.png",false),
+	PAREDE("/parede1.png",false),
+	NADA("/nada.png",false);
 	
-	// PARA O HUD,
-	VIDA("/coracao.png"),
-	SEMVIDA("/coracao2.png")
-	
-	;
-
 	private final String caminhoImagem;
+	private boolean transponivel;
 
-	Elemento(String caminhoImagem) {
+	Elemento(String caminhoImagem, boolean transponivel) {
 		this.caminhoImagem = caminhoImagem;
+		this.transponivel = transponivel;
 	}
 
 	public String getCaminhoImagem() {
 		return caminhoImagem;
+	}
+	
+	public void setElementoEhTransponivel(boolean transponivel){
+		this.transponivel = transponivel;
+	}
+	
+	public boolean elementoEhTransponivel(){
+		return transponivel;
 	}
 	
 }

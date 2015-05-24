@@ -6,14 +6,14 @@ import apresentacao.TelaJogo;
 
 public class Tabuleiro {
 
-	private Mapa mapa;
+	private EstruturaMapas estruturaMapas;
 	
 	private SaidaJogo saida;
 	private Hud hud;
 	private Movimentacao mov;
 	
-	public Tabuleiro(Mapa mapa) {
-		this.mapa = mapa;
+	public Tabuleiro(EstruturaMapas estruturaMapas) {
+		this.estruturaMapas = estruturaMapas;
 	}
 
 	public void setSaida(TelaJogo saida) {
@@ -23,570 +23,59 @@ public class Tabuleiro {
 	public void iniciarJogo() {
 		ocultarPortal();
 		saida.iniciarJogo();
+		this.mov = new Movimentacao(this,estruturaMapas,this.hud,this.saida);
+		
 	}
-
+	
+	public SaidaJogo getSaida(){
+		return this.saida;
+	}
+	
 	public int getNumeroLinhas() {
-		return mapa.getLinha();
+		return estruturaMapas.getMapaAtual().getLinha();
 	}
 
 	public int getNumeroColunas() {
-		return mapa.getColuna();
+		return estruturaMapas.getMapaAtual().getColuna();
 	}
 
 	public Elemento elementoEm(Posicao posicao) {
-		return mapa.getMapa()[posicao.getLinha()][posicao.getColuna()];
+		return estruturaMapas.getMapaAtual().getMapa()[posicao.getLinha()][posicao.getColuna()];
 	}
 	
-//	public void fazerMovimento(Direcao d){
-//		this.mov = new Movimentacao(this,mapa,hud,this.saida);
-//		mov.fazerMovimento(d);
-//	}
-
-	public void fazerMovimento(Direcao d) {
+	public void fazerMovimento(Direcao d){
+		mov.fazerMovimento(d, this.saida);
 		
-		Posicao posicaoAntiga = null;
-		Posicao posicaoNova = null;
-		Elemento elementoAlcancado = null;
-		
-		/*if(acharPosicaoDe(Elemento.PERSONAGEM) != null){
-			posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEM);
-			posicaoNova = posicaoAntiga.somar(d);
-			if (posicaoEhInvalida(posicaoNova)) return;
-
-			elementoAlcancado = elementoEm(posicaoNova);
-
-			alterarElemento(posicaoAntiga, Elemento.GRAMA);
-			alterarElemento(posicaoNova, Elemento.PERSONAGEM);
-		}*/
-		
-		//==== Troca de Imagem por diferentes direções de locomoção ===
-		if(Direcao.CIMA == d){
-				 if(acharPosicaoDe(Elemento.PERSONAGEM)!= null){
-					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEM);
-				 }
-				 else if(acharPosicaoDe(Elemento.PERSONAGEMUP)!= null){
-					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUP);
-				 }
-				 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWN)!= null){
-					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWN);
-				 }
-				 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFT)!= null){
-					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFT);
-				 }
-				 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHT)!= null){
-					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHT);
-				 }
-				 
-				 
-				 else if(acharPosicaoDe(Elemento.PERSONAGEMUPWATER)!= null){
-					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUPWATER);
-				 }
-				 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER)!= null){
-					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER);
-				 }
-				 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER)!= null){
-					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER);
-				 }
-				 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER)!= null){
-					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER);
-				 }
-				 
-				 else if(acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY)!= null){
-					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY);
-				 }
-				 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY)!= null){
-					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY);
-				 }
-				 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY)!= null){
-					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY);
-				 }
-				 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY)!= null){
-					 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY);
-				 }
-				 
-				posicaoNova = posicaoAntiga.somar(d);
-				if (posicaoEhInvalida(posicaoNova)) return;
-
-				elementoAlcancado = elementoEm(posicaoNova);
-				
-				
-
-				Elemento elem = mapa.checarElementoPosicao(posicaoAntiga);
-				if(elementoAlcancado == Elemento.PASSAGEM){
-					alterarElemento(posicaoNova, Elemento.PASSAGEM);
-					alterarElemento(posicaoAntiga, elem);
-				}
-				else if(elementoAlcancado == Elemento.PASSAGEMVOLTA){
-					alterarElemento(posicaoNova, Elemento.PASSAGEMVOLTA);
-					alterarElemento(posicaoAntiga, elem);
-				}
-				
-				else if(elementoAlcancado == Elemento.PAREDE){
-					alterarElemento(posicaoNova, Elemento.PAREDE);
-					alterarElemento(posicaoAntiga,mapa.checarElementoPosicao(posicaoAntiga,posicaoNova,d));
-				}
-				
-				else if(elementoAlcancado == Elemento.TERRA){
-					if(elementoEm(posicaoAntiga) == Elemento.GRAMA){
-						alterarElemento(posicaoNova, Elemento.PERSONAGEMUPDIRTY);
-						alterarElemento(posicaoAntiga,Elemento.GRAMA);
-					}
-					else if(elementoEm(posicaoAntiga) == Elemento.AGUA){
-						alterarElemento(posicaoNova, Elemento.PERSONAGEMUPDIRTY);
-						alterarElemento(posicaoAntiga,Elemento.AGUA);
-					}
-					else{
-						alterarElemento(posicaoNova, Elemento.PERSONAGEMUPDIRTY);
-						alterarElemento(posicaoAntiga,Elemento.TERRA);
-					}
-				}
-				
-				else if(elementoAlcancado == Elemento.VIDA){
-					if(!hud.adicionarVida()){
-						alterarElemento(posicaoNova, Elemento.VIDA);
-						alterarElemento(posicaoNova.somar(d), Elemento.PERSONAGEMUP);
-						alterarElemento(posicaoAntiga, elem);
-					}
-					else{
-						alterarElemento(posicaoAntiga, elem);
-						alterarElemento(posicaoNova, Elemento.PERSONAGEMUP);
-					}
-				}
-				
-				else{
-					alterarElemento(posicaoAntiga, elem);
-					alterarElemento(posicaoNova, Elemento.PERSONAGEMUP);
-				}
-				
-			
-		}
-		else if(Direcao.BAIXO == d){
-			 if(acharPosicaoDe(Elemento.PERSONAGEM)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEM);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMUP)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUP);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWN)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWN);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFT)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFT);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHT)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHT);
-			 }
-			 
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMUPWATER)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUPWATER);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY);
-			 }
-			 
-			posicaoNova = posicaoAntiga.somar(d);
-			if (posicaoEhInvalida(posicaoNova)) return;
-
-			elementoAlcancado = elementoEm(posicaoNova);
-
-			//alterarElemento(posicaoAntiga, Elemento.GRAMA);
-			Elemento elem = mapa.checarElementoPosicao(posicaoAntiga);
-			if(elementoAlcancado == Elemento.PASSAGEM){
-				alterarElemento(posicaoNova, Elemento.PASSAGEM);
-				alterarElemento(posicaoAntiga, elem);
-			}
-			else if(elementoAlcancado == Elemento.PASSAGEMVOLTA){
-				alterarElemento(posicaoNova, Elemento.PASSAGEMVOLTA);
-				alterarElemento(posicaoAntiga, elem);
-			}
-			
-			else if(elementoAlcancado == Elemento.PAREDE){
-				alterarElemento(posicaoNova, Elemento.PAREDE);
-				alterarElemento(posicaoAntiga,mapa.checarElementoPosicao(posicaoAntiga,posicaoNova,d));
-			}
-			else if(elementoAlcancado == Elemento.TERRA){
-				if(elementoEm(posicaoAntiga) == Elemento.GRAMA){
-					alterarElemento(posicaoNova, Elemento.PERSONAGEMDOWNDIRTY);
-					alterarElemento(posicaoAntiga,Elemento.GRAMA);
-				}
-				else if(elementoEm(posicaoAntiga) == Elemento.AGUA){
-					alterarElemento(posicaoNova, Elemento.PERSONAGEMDOWNDIRTY);
-					alterarElemento(posicaoAntiga,Elemento.AGUA);
-				}
-				else{
-					alterarElemento(posicaoNova, Elemento.PERSONAGEMDOWNDIRTY);
-					alterarElemento(posicaoAntiga,Elemento.TERRA);
-				}
-			}
-			
-			else if(elementoAlcancado == Elemento.VIDA){
-				if(!hud.adicionarVida()){
-					alterarElemento(posicaoNova, Elemento.VIDA);
-					alterarElemento(posicaoNova.somar(d), Elemento.PERSONAGEMDOWN);
-					alterarElemento(posicaoAntiga, elem);
-				}
-				else{
-					alterarElemento(posicaoAntiga, elem);
-					alterarElemento(posicaoNova, Elemento.PERSONAGEMDOWN);
-				}
-			}
-			
-			else{
-				alterarElemento(posicaoAntiga, elem);
-				alterarElemento(posicaoNova, Elemento.PERSONAGEMDOWN);
-			}
-		
-		}
-		else if(Direcao.ESQUERDA == d){
-			 if(acharPosicaoDe(Elemento.PERSONAGEM)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEM);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMUP)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUP);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWN)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWN);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFT)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFT);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHT)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHT);
-			 }
-			 
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMUPWATER)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUPWATER);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER);
-			 }
-			 
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY);
-			 }
-			 
-			posicaoNova = posicaoAntiga.somar(d);
-			if (posicaoEhInvalida(posicaoNova)) return;
-
-			elementoAlcancado = elementoEm(posicaoNova);
-
-			//alterarElemento(posicaoAntiga, Elemento.GRAMA);
-			Elemento elem = mapa.checarElementoPosicao(posicaoAntiga);
-			if(elementoAlcancado == Elemento.PASSAGEM){
-				alterarElemento(posicaoNova, Elemento.PASSAGEM);
-				alterarElemento(posicaoAntiga, elem);
-			}
-			else if(elementoAlcancado == Elemento.PASSAGEMVOLTA){
-				alterarElemento(posicaoNova, Elemento.PASSAGEMVOLTA);
-				alterarElemento(posicaoAntiga, elem);
-			}
-			
-			else if(elementoAlcancado == Elemento.PAREDE){
-				alterarElemento(posicaoNova, Elemento.PAREDE);
-				alterarElemento(posicaoAntiga,mapa.checarElementoPosicao(posicaoAntiga,posicaoNova,d));
-			}
-			
-			else if(elementoAlcancado == Elemento.TERRA){
-				if(elementoEm(posicaoAntiga) == Elemento.GRAMA){
-					alterarElemento(posicaoNova, Elemento.PERSONAGEMLEFTDIRTY);
-					alterarElemento(posicaoAntiga,Elemento.GRAMA);
-				}
-				else if(elementoEm(posicaoAntiga) == Elemento.AGUA){
-					alterarElemento(posicaoNova, Elemento.PERSONAGEMLEFTDIRTY);
-					alterarElemento(posicaoAntiga,Elemento.AGUA);
-				}
-				else{
-					alterarElemento(posicaoNova, Elemento.PERSONAGEMLEFTDIRTY);
-					alterarElemento(posicaoAntiga,Elemento.TERRA);
-				}
-			}
-			
-			else if(elementoAlcancado == Elemento.VIDA){
-				if(!hud.adicionarVida()){
-					alterarElemento(posicaoNova, Elemento.VIDA);
-					alterarElemento(posicaoNova.somar(d), Elemento.PERSONAGEMLEFT);
-					alterarElemento(posicaoAntiga, elem);
-				}
-				else{
-					alterarElemento(posicaoAntiga, elem);
-					alterarElemento(posicaoNova, Elemento.PERSONAGEMLEFT);
-				}
-			}
-			
-			else{
-				alterarElemento(posicaoAntiga, elem);
-				alterarElemento(posicaoNova, Elemento.PERSONAGEMLEFT);
-			}
-			
-		
-		}
-		else if(Direcao.DIREITA == d){
-			 if(acharPosicaoDe(Elemento.PERSONAGEM)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEM);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMUP)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUP);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWN)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWN);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFT)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFT);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHT)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHT);
-			 }
-			 
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMUPWATER)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUPWATER);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER);
-			 }
-			 
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY);
-			 }
-			 else if(acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY)!= null){
-				 posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY);
-			 }
-			 
-			 
-			 
-			posicaoNova = posicaoAntiga.somar(d);
-			if (posicaoEhInvalida(posicaoNova)) return;
-
-			elementoAlcancado = elementoEm(posicaoNova);
-			
-			//alterarElemento(posicaoAntiga, Elemento.GRAMA);
-			Elemento elem = mapa.checarElementoPosicao(posicaoAntiga);
-			alterarElemento(posicaoAntiga, elem);
-			if(elementoAlcancado == Elemento.PASSAGEM){
-				alterarElemento(posicaoNova, Elemento.PASSAGEM);
-				alterarElemento(posicaoAntiga, elem);
-			}
-			else if(elementoAlcancado == Elemento.PASSAGEMVOLTA){
-				alterarElemento(posicaoNova, Elemento.PASSAGEMVOLTA);
-				alterarElemento(posicaoAntiga, elem);
-			}
-			
-			else if(elementoAlcancado == Elemento.PAREDE){
-				alterarElemento(posicaoNova, Elemento.PAREDE);
-				alterarElemento(posicaoAntiga,mapa.checarElementoPosicao(posicaoAntiga,posicaoNova,d));
-			}
-			
-			else if(elementoAlcancado == Elemento.TERRA){
-				if(elementoEm(posicaoAntiga) == Elemento.GRAMA){
-					alterarElemento(posicaoNova, Elemento.PERSONAGEMRIGHTDIRTY);
-					alterarElemento(posicaoAntiga,Elemento.GRAMA);
-				}
-				else if(elementoEm(posicaoAntiga) == Elemento.AGUA){
-					alterarElemento(posicaoNova, Elemento.PERSONAGEMRIGHTDIRTY);
-					alterarElemento(posicaoAntiga,Elemento.AGUA);
-				}
-				else{
-					alterarElemento(posicaoNova, Elemento.PERSONAGEMRIGHTDIRTY);
-					alterarElemento(posicaoAntiga,Elemento.TERRA);
-				}
-			}
-			
-			else if(elementoAlcancado == Elemento.VIDA){
-				if(!hud.adicionarVida()){
-					alterarElemento(posicaoNova, Elemento.VIDA);
-					alterarElemento(posicaoNova.somar(d), Elemento.PERSONAGEMRIGHT);
-					alterarElemento(posicaoAntiga, elem);
-				}
-				else{
-					alterarElemento(posicaoAntiga, elem);
-					alterarElemento(posicaoNova, Elemento.PERSONAGEMRIGHT);
-				}
-			}
-			
-			else{
-				alterarElemento(posicaoAntiga, elem);
-				alterarElemento(posicaoNova, Elemento.PERSONAGEMRIGHT);
-			}
-		}
-		//=======================//
-		
-		if(hud.getPontuacao() >= mapa.obterQuantidadeTotalDePontosNoMapa()){
-			reexibirPortal();
-		}
-		
-		
-		//Posicao posicaoAntiga = acharPosicaoDe(Elemento.PERSONAGEM);
-		//Posicao posicaoNova = posicaoAntiga.somar(d);
-
-		//if (posicaoEhInvalida(posicaoNova)) return;
-
-		//Elemento elementoAlcancado = elementoEm(posicaoNova);
-
-		//alterarElemento(posicaoAntiga, Elemento.GRAMA);
-		//alterarElemento(posicaoNova, Elemento.PERSONAGEM);
-
-		switch (elementoAlcancado) {
-		case AGUA:
-			if(Direcao.CIMA == d){
-				alterarElemento(posicaoNova, Elemento.PERSONAGEMUPWATER);
-				if(hud.getVida() > 1){
-					hud.removerVida();
-					//saida.recarregarMapa();
-				}
-				else{
-					hud.removerVida();
-					saida.perderJogo();
-				}
-				
-			}
-			else if(Direcao.BAIXO == d){
-				alterarElemento(posicaoNova, Elemento.PERSONAGEMDOWNWATER);
-				if(hud.getVida() > 1){
-					hud.removerVida();
-					//saida.recarregarMapa();
-				}
-				else{
-					hud.removerVida();
-					saida.perderJogo();
-				}
-			}
-			else if(Direcao.ESQUERDA == d){
-				alterarElemento(posicaoNova, Elemento.PERSONAGEMLEFTWATER);
-				if(hud.getVida() > 1){
-					hud.removerVida();
-					//saida.recarregarMapa();
-				}
-				else{
-					hud.removerVida();
-					saida.perderJogo();
-				}
-			}
-			else if(Direcao.DIREITA == d){
-				alterarElemento(posicaoNova, Elemento.PERSONAGEMRIGHTWATER);
-				if(hud.getVida() > 1){
-					hud.removerVida();
-					//saida.recarregarMapa();
-				}
-				else{
-					hud.removerVida();
-					saida.perderJogo();
-				}
-			}
-			break;
-
-		case MACA:
-			hud.incrementarPontuacao();
-		
-			break;
-
-		case PORTAL:
-			saida.passarDeFase();
-			break;
-			
-		case PASSAGEM:
-			posicaoNova = posicaoNova.subtrair(d);
-			mapa.getMapa()[posicaoNova.getLinha()][posicaoNova.getColuna()] = Elemento.PERSONAGEM;
-			mapa.avancarUmMapa();
-			if(hud.getPontuacao() >= mapa.obterQuantidadeTotalDePontosNoMapa()){
-				reexibirPortal();
-			}
-			saida.recarregarMapa();
-			
-			break;
-		
-		case PASSAGEMVOLTA:
-			posicaoNova = posicaoNova.subtrair(d);
-			mapa.getMapa()[posicaoNova.getLinha()][posicaoNova.getColuna()] = Elemento.PERSONAGEM;
-			mapa.retrocederUmMapa();
-			if(hud.getPontuacao() >= mapa.obterQuantidadeTotalDePontosNoMapa()){
-				reexibirPortal();
-			}
-			saida.recarregarMapa();
-			break;
-			
-		case VIDA:
-			hud.adicionarVida();
-			break;
-			
-		//case PAREDE:
-			//posicaoNova = posicaoNova.subtrair(d);
-			//alterarElemento(posicaoAntiga, );
-		default:
-			break;
-		}
-
 	}
-	
+
+
 	public void setHud(Hud hud){
 		this.hud = hud;
 	}
 
+
 	private void ocultarPortal() {
-		alterarElemento(mapa.obterPosicaoPortalMapa(), Elemento.GRAMA);
+		alterarElemento(estruturaMapas.getMapaAtual().obterPosicaoPortalMapa(), Elemento.GRAMA);
 	}
 
 	void reexibirPortal() {
-		if(mapa.temPortalNoMapa()==true){
-			alterarElemento(mapa.obterPosicaoPortalMapa(), Elemento.PORTAL);
+		if(estruturaMapas.getMapaAtual().temPortalNoMapa()==true){
+			alterarElemento(estruturaMapas.getMapaAtual().obterPosicaoPortalMapa(), Elemento.PORTAL);
 		}
 		
 	}
 
 	void alterarElemento(Posicao posicao, Elemento e) {
-			mapa.getMapa()[posicao.getLinha()][posicao.getColuna()] = e;
+			estruturaMapas.getMapaAtual().getMapa()[posicao.getLinha()][posicao.getColuna()] = e;
 			saida.alterarElemento(posicao, e);
 	}
 
 	private int quantidadeMacasRestantes() {
 		int ret = 0;
 
-		for (int i = 0; i < mapa.getMapa().length; i++) {
-			for (int j = 0; j < mapa.getMapa()[i].length; j++) {
-				if (mapa.getMapa()[i][j] == Elemento.MACA) ++ret;
+		for (int i = 0; i < estruturaMapas.getMapaAtual().getMapa().length; i++) {
+			for (int j = 0; j < estruturaMapas.getMapaAtual().getMapa()[i].length; j++) {
+				if (estruturaMapas.getMapaAtual().getMapa()[i][j] == Elemento.RUBI) ++ret;
 			}
 		}
 
@@ -594,9 +83,9 @@ public class Tabuleiro {
 	}
 
 	Posicao acharPosicaoDe(Elemento elemento) {
-		for (int i = 0; i < mapa.getMapa().length; i++) {
-			for (int j = 0; j < mapa.getMapa()[i].length; j++) {
-				if (mapa.getMapa()[i][j] == elemento) {
+		for (int i = 0; i < estruturaMapas.getMapaAtual().getMapa().length; i++) {
+			for (int j = 0; j < estruturaMapas.getMapaAtual().getMapa()[i].length; j++) {
+				if (estruturaMapas.getMapaAtual().getMapa()[i][j] == elemento) {
 					return new Posicao(i, j);
 				}
 			}
@@ -605,9 +94,79 @@ public class Tabuleiro {
 		return null;
 	}
 
-	private boolean posicaoEhInvalida(Posicao p) {
+	boolean posicaoEhInvalida(Posicao p) {
 		return p.getLinha() < 0 || p.getLinha() >= getNumeroLinhas()
 				|| p.getColuna() < 0 || p.getColuna() >= getNumeroColunas();
+	}
+	
+	public boolean navegar(Posicao posicaoNova, Posicao posicaoAntiga, Elemento spritePersonagem, Direcao d){
+		if((posicaoNova.getColuna() == getNumeroColunas()) && (Direcao.DIREITA == d)){
+			if((estruturaMapas.getDireita() != null) && (estruturaMapas.getMapaAtual().getIndiceDoMapaAtual() == 0)){
+				alterarElemento(posicaoAntiga, spritePersonagem);
+				this.estruturaMapas = estruturaMapas.navegarParaDireita();
+				Elemento personagem;
+				personagem = mov.retornarElementoDaPosicaoAntiga((mov.encontrarPosicaoPersonagem()));
+				alterarElemento(mov.encontrarPosicaoPersonagem(), personagem);
+				posicaoNova = new Posicao(posicaoAntiga.getLinha(),0);
+				alterarElemento(posicaoNova,spritePersonagem);
+				saida.recarregarMapa();
+				return true;
+			}
+			else{
+				return false;
+			}
+		}
+		else if((posicaoNova.getColuna() < 0) && (Direcao.ESQUERDA == d)){
+			if((estruturaMapas.getEsquerda() != null) && (estruturaMapas.getMapaAtual().getIndiceDoMapaAtual() == 0)){
+				alterarElemento(posicaoAntiga, spritePersonagem);
+				this.estruturaMapas = estruturaMapas.navegarParaEsquerda();
+				Elemento personagem;
+				personagem = mov.retornarElementoDaPosicaoAntiga((mov.encontrarPosicaoPersonagem()));
+				alterarElemento(mov.encontrarPosicaoPersonagem(), personagem);
+				posicaoNova = new Posicao(posicaoAntiga.getLinha(),getNumeroColunas()-1);
+				alterarElemento(posicaoNova,spritePersonagem);
+				saida.recarregarMapa();
+				return true;
+			}
+			else{
+				return false;
+			}
+		}
+		else if((posicaoNova.getLinha() < 0) &&  (Direcao.CIMA == d)){
+			if((estruturaMapas.getCima() != null) && (estruturaMapas.getMapaAtual().getIndiceDoMapaAtual() == 0)){
+				alterarElemento(posicaoAntiga, spritePersonagem);
+				this.estruturaMapas = estruturaMapas.navegarParaCima();
+				Elemento personagem;
+				personagem = mov.retornarElementoDaPosicaoAntiga((mov.encontrarPosicaoPersonagem()));
+				alterarElemento(mov.encontrarPosicaoPersonagem(), personagem);
+				posicaoNova = new Posicao(getNumeroLinhas()-1,posicaoNova.getColuna());
+				alterarElemento(posicaoNova,spritePersonagem);
+				saida.recarregarMapa();
+				return true;
+			}
+			else{
+				return false;
+			}
+		}
+		else if((posicaoNova.getLinha() >= getNumeroLinhas()) &&  (Direcao.BAIXO == d)){
+			if((estruturaMapas.getBaixo() != null)&& (estruturaMapas.getMapaAtual().getIndiceDoMapaAtual() == 0)){
+				alterarElemento(posicaoAntiga, spritePersonagem);
+				this.estruturaMapas = estruturaMapas.navegarParaBaixo();
+				Elemento personagem;
+				personagem = mov.retornarElementoDaPosicaoAntiga((mov.encontrarPosicaoPersonagem()));
+				alterarElemento(mov.encontrarPosicaoPersonagem(), personagem);
+				posicaoNova = new Posicao(0,posicaoNova.getColuna());
+				alterarElemento(posicaoNova,spritePersonagem);
+				saida.recarregarMapa();
+				return true;
+			}
+			else{
+				return false;
+			}
+		}
+		else{
+			return false;
+		}
 	}
 
 }

@@ -83,6 +83,10 @@ public class Mapa {
 		
 	}
 	
+	public int getIndiceDoMapaAtual(){
+		return indiceMapaAtual;
+	}
+	
 	/**
 	 * Função responsável por retornar a posicao do portal
 	 * no mapa atual
@@ -121,7 +125,7 @@ public class Mapa {
 	private void calcularQuantidadeTotalDePontosNoMapa(){
 		for(int k = 0; k < linha; k++){
 			for(int l = 0; l < coluna; l++){
-				if(mapa[k][l]==Elemento.MACA){
+				if(mapa[k][l]==Elemento.RUBI){
 					totalDePontosNoMapa++;
 				}
 			}
@@ -131,7 +135,7 @@ public class Mapa {
 			Elemento[][] map = listaMapa.get(k);
 			for(int g = 0; g < linha; g++){
 				for(int s = 0; s < coluna; s++){
-					if(map[g][s]==Elemento.MACA){
+					if(map[g][s]==Elemento.RUBI){
 						totalDePontosNoMapa++;
 					}
 				}
@@ -139,126 +143,4 @@ public class Mapa {
 		}
 	}
 	
-	/**
-	 * Método responsável por encontrar a posição do personagem no mapa
-	 * @param Direcao d
-	 * @return posicaoAntiga*/
-	
-	public Elemento checarElementoPosicao(Posicao pos){
-		Tabuleiro tab = new Tabuleiro(new Mapa(mapa));
-		if(tab.elementoEm(pos) == Elemento.PERSONAGEM){
-			return Elemento.GRAMA;
-		}
-		else if(tab.elementoEm(pos) == Elemento.PERSONAGEMUP){
-			return Elemento.GRAMA;
-		}
-		else if(tab.elementoEm(pos) == Elemento.PERSONAGEMDOWN){
-			return Elemento.GRAMA;
-		}
-		else if(tab.elementoEm(pos) == Elemento.PERSONAGEMLEFT){
-			return Elemento.GRAMA;
-		}
-		else if(tab.elementoEm(pos) == Elemento.PERSONAGEMRIGHT){
-			return Elemento.GRAMA;
-		}
-		
-		else if(tab.elementoEm(pos) == Elemento.PERSONAGEMUPDIRTY){
-			return Elemento.TERRA;
-		}
-		else if(tab.elementoEm(pos) == Elemento.PERSONAGEMDOWNDIRTY){
-			return Elemento.TERRA;
-		}
-		else if(tab.elementoEm(pos) == Elemento.PERSONAGEMLEFTDIRTY){
-			return Elemento.TERRA;
-		}
-		else if(tab.elementoEm(pos) == Elemento.PERSONAGEMRIGHTDIRTY){
-			return Elemento.TERRA;
-		}
-		
-		
-		else if(tab.elementoEm(pos) == Elemento.PASSAGEM){
-			return Elemento.PASSAGEM;
-		}
-		
-		else if(tab.elementoEm(pos) == Elemento.VIDA){
-			return Elemento.VIDA;
-		}
-		
-		
-		
-		//else if(tab.elementoEm(pos) == Elemento.PORTAL){
-			//return Elemento.GRAMA;
-		//}
-		
-		else if(tab.elementoEm(pos) == Elemento.PERSONAGEMUPWATER){
-			return Elemento.AGUA;
-		}
-		else if(tab.elementoEm(pos) == Elemento.PERSONAGEMDOWNWATER){
-			return Elemento.AGUA;
-		}
-		else if(tab.elementoEm(pos) == Elemento.PERSONAGEMLEFTWATER){
-			return Elemento.AGUA;
-		}
-		else if(tab.elementoEm(pos) == Elemento.PERSONAGEMRIGHTWATER){
-			return Elemento.AGUA;
-		}
-		else{
-			return tab.elementoEm(pos);
-		}
-	}
-	
-	// Permite devolver um possivel personagem a sua posição antiga, no caso de ser parede
-	
-	public Elemento checarElementoPosicao(Posicao pos, Posicao pos2, Direcao d){
-		Tabuleiro tab = new Tabuleiro(new Mapa(mapa));
-		
-		if(d == Direcao.CIMA){
-			if((tab.elementoEm(pos) == Elemento.AGUA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
-				return Elemento.PERSONAGEMUPWATER;
-			}
-			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
-				return Elemento.PERSONAGEMUP;
-			}
-			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.TERRA)){
-				return Elemento.PERSONAGEMUPDIRTY;
-			}
-		}
-		else if(d == Direcao.BAIXO){
-			if((tab.elementoEm(pos) == Elemento.AGUA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
-				return Elemento.PERSONAGEMDOWNWATER;
-			}
-			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
-				return Elemento.PERSONAGEMDOWN;
-			}
-			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.TERRA)){
-				return Elemento.PERSONAGEMDOWNDIRTY;
-			}
-		}
-		
-		else if(d == Direcao.DIREITA){
-			if((tab.elementoEm(pos) == Elemento.AGUA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
-				return Elemento.PERSONAGEMRIGHTWATER;
-			}
-			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
-				return Elemento.PERSONAGEMRIGHT;
-			}
-			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.TERRA)){
-				return Elemento.PERSONAGEMRIGHTDIRTY;
-			}
-		}
-		
-		else if(d == Direcao.ESQUERDA){
-			if((tab.elementoEm(pos) == Elemento.AGUA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
-				return Elemento.PERSONAGEMLEFTWATER;
-			}
-			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.PAREDE)){
-				return Elemento.PERSONAGEMLEFT;
-			}
-			else if((tab.elementoEm(pos) == Elemento.GRAMA) && (tab.elementoEm(pos2)== Elemento.TERRA)){
-				return Elemento.PERSONAGEMLEFTDIRTY;
-			}
-		}
-		return tab.elementoEm(pos); 
-	}
-
 }

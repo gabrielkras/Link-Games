@@ -6,83 +6,120 @@ package logicajogo;
 public class Movimentacao {
 	
 	private Tabuleiro tabuleiro;
-	private Mapa mapa;
+	private EstruturaMapas estruturaMapas;
 	private Hud hud;
 	private SaidaJogo saida;
 	
-	public Movimentacao(Tabuleiro tabuleiro, Mapa mapa, Hud hud,SaidaJogo saida){
-		this.mapa = mapa;
+	public Movimentacao(Tabuleiro tabuleiro, EstruturaMapas estruturaMapas, Hud hud, SaidaJogo saida){
+		this.estruturaMapas = estruturaMapas;
 		this.tabuleiro = tabuleiro;
+		this.saida = saida;
 		this.hud = hud;
 	}
 	/**
 	 * Responsável por realizar a movimentação do personagem no mapa, não importando
 	 * o tipo de terreno que o mesmo se encontra
 	 * @param Direcao d*/	
-	public void fazerMovimento(Direcao d){
+	public void fazerMovimento(Direcao d, SaidaJogo saida){
 		Posicao posicaoAntiga = null;
 		Posicao posicaoNova = null;
 		Elemento elementoPosicaoNova = null;
 		Elemento elementoPosicaoAntiga = null;
+		Elemento elementoEmNovaPosicao = null;
 		
 		posicaoAntiga = encontrarPosicaoPersonagem();
-		elementoPosicaoAntiga = retornarElementoDaPosicaoAntiga(posicaoAntiga);
+		elementoPosicaoAntiga = tabuleiro.elementoEm(posicaoAntiga);
+		
 		posicaoNova = posicaoAntiga.somar(d);
 		
-		if (posicaoEhInvalida(posicaoNova)) return;
+//		if(tabuleiro.navegar(posicaoNova) == true){
+//			posicaoNova = new Posicao(5,0);
+//			tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
+//			return;
+//		}
+		
+		if(tabuleiro.navegar(posicaoNova,posicaoAntiga,elementoPosicaoAntiga,d)==true) return;
+		if (tabuleiro.posicaoEhInvalida(posicaoNova)) return;
+		
+		elementoEmNovaPosicao = tabuleiro.elementoEm(posicaoNova);
 		
 		elementoPosicaoNova = retornarElementoDaPosicaoNova(posicaoNova, posicaoAntiga, d);
+		elementoPosicaoAntiga = retornarElementoDaPosicaoAntiga(posicaoAntiga);
 		
-		Elemento elementoAlcancado = tabuleiro.elementoEm(posicaoNova);
-		
-		tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
-		tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
-		
-		switch (elementoPosicaoNova){
+		switch (elementoEmNovaPosicao){
 			case AGUA:
 				hud.removerVida();
-				break;
+				if(hud.getVida() <= 0){
+					tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
+					tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
+					saida.perderJogo();
+					break;
+				}
+				else{
+					tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
+					tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
+					break;
+				}
+				
 			case GRAMA:
+				tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
+				tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
 				break;
-			case MACA:
+			case RUBI:
 				hud.incrementarPontuacao();
+				tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
+				tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
 				break;
 			case PORTAL:
 				saida.passarDeFase();
+				tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
+				tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
 				break;
+			case VIDA:
+				if(hud.vidaEstaCheia() == true){
+					break;
+				}
+				else{
+					hud.adicionarVida();
+					tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
+					tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
+					break;
+				}
 				
 			case PASSAGEM:
-				posicaoNova = posicaoNova.subtrair(d);
-				mapa.getMapa()[posicaoNova.getLinha()][posicaoNova.getColuna()] = Elemento.PERSONAGEM;
-				mapa.avancarUmMapa();
-				if(hud.getPontuacao() >= mapa.obterQuantidadeTotalDePontosNoMapa()){
-					tabuleiro.reexibirPortal();
-				}
-				//saida.recarregarMapa();
-				
+				tabuleiro.alterarElemento(posicaoNova, Elemento.PASSAGEM);
+				estruturaMapas.getMapaAtual().avancarUmMapa();
+				tabuleiro.alterarElemento(encontrarPosicaoPersonagem(), tabuleiro.elementoEm(encontrarPosicaoPersonagem()));
+				this.saida.recarregarMapa();
 				break;
 			
 			case PASSAGEMVOLTA:
-				posicaoNova = posicaoNova.subtrair(d);
-				mapa.getMapa()[posicaoNova.getLinha()][posicaoNova.getColuna()] = Elemento.PERSONAGEM;
-				mapa.retrocederUmMapa();
-				if(hud.getPontuacao() >= mapa.obterQuantidadeTotalDePontosNoMapa()){
-					tabuleiro.reexibirPortal();
-				}
-				saida.recarregarMapa();
+				tabuleiro.alterarElemento(posicaoNova, Elemento.PASSAGEMVOLTA);
+				estruturaMapas.getMapaAtual().retrocederUmMapa();
+				tabuleiro.alterarElemento(encontrarPosicaoPersonagem(), tabuleiro.elementoEm(encontrarPosicaoPersonagem()));
+				this.saida.recarregarMapa();
 				break;
 			default:
-				break;
+				if(elementoEmNovaPosicao.elementoEhTransponivel() == false){
+					break;
+				}
+				else{
+					tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
+					tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
+					break;
+				}
+				
 			}
 		
 		
 	}
 	
+	
 	/**
 	 * Método responsável por encontrar a posição do personagem no mapa
 	 * @param Direcao d
 	 * @return posicaoAntiga*/
-	private Posicao encontrarPosicaoPersonagem(){
+	public Posicao encontrarPosicaoPersonagem(){
 		Posicao posicao = null;
 		
 			// Personagem na Grama
@@ -138,7 +175,7 @@ public class Movimentacao {
 	 * depois do movimento
 	 * @param Posicao posicaoAntiga
 	 * @return Elemento*/
-	private Elemento retornarElementoDaPosicaoAntiga(Posicao posicaoAntiga){
+	public Elemento retornarElementoDaPosicaoAntiga(Posicao posicaoAntiga){
 		Elemento resultante = null;
 		// CASO GRAMA
 		if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM){
@@ -368,48 +405,48 @@ public class Movimentacao {
 			}
 			//PONTOS
 			    //cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
 				resultante = Elemento.PERSONAGEMUP;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
 				resultante = Elemento.PERSONAGEMUPWATER;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
 				resultante = Elemento.PERSONAGEMUPDIRTY;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
 				resultante = Elemento.PERSONAGEMUP;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
 				resultante = Elemento.PERSONAGEMUPWATER;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
 				resultante = Elemento.PERSONAGEMUPDIRTY;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
 				resultante = Elemento.PERSONAGEMUP;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
 				resultante = Elemento.PERSONAGEMUPWATER;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
 				resultante = Elemento.PERSONAGEMUPDIRTY;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
 				resultante = Elemento.PERSONAGEMUP;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
 				resultante = Elemento.PERSONAGEMUPWATER;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
 				resultante = Elemento.PERSONAGEMUPDIRTY;
 			}
 			//VIDA
 			else if(tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA){
-				if(hud.adicionarVida() == true){
+				if(hud.vidaEstaCheia() == false){
 					//cima
 					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
 						resultante = Elemento.PERSONAGEMUP;
@@ -451,7 +488,7 @@ public class Movimentacao {
 						resultante = Elemento.PERSONAGEMUPDIRTY;
 					}
 				}
-				else if(hud.adicionarVida() == false){
+				else if(!hud.vidaEstaCheia() == true){
 					//cima
 					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
 						resultante = Elemento.VIDA;
@@ -705,48 +742,48 @@ public class Movimentacao {
 			}
 			//PONTOS
 			    //cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
 				resultante = Elemento.PERSONAGEMDOWN;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
 				resultante = Elemento.PERSONAGEMDOWNWATER;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
 				resultante = Elemento.PERSONAGEMDOWNDIRTY;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
 				resultante = Elemento.PERSONAGEMDOWN;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
 				resultante = Elemento.PERSONAGEMDOWNWATER;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
 				resultante = Elemento.PERSONAGEMDOWNDIRTY;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
 				resultante = Elemento.PERSONAGEMDOWN;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
 				resultante = Elemento.PERSONAGEMDOWNWATER;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
 				resultante = Elemento.PERSONAGEMDOWNDIRTY;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
 				resultante = Elemento.PERSONAGEMDOWN;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
 				resultante = Elemento.PERSONAGEMDOWNWATER;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
 				resultante = Elemento.PERSONAGEMDOWNDIRTY;
 			}
 			//VIDA
 			else if(tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA){
-				if(hud.adicionarVida() == true){
+				if(hud.vidaEstaCheia() == false){
 					//cima
 					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
 						resultante = Elemento.PERSONAGEMDOWN;
@@ -788,7 +825,7 @@ public class Movimentacao {
 						resultante = Elemento.PERSONAGEMDOWNDIRTY;
 					}
 				}
-				else if(hud.adicionarVida() == false){
+				else if(hud.vidaEstaCheia() == true){
 					//cima
 					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
 						resultante = Elemento.VIDA;
@@ -1000,48 +1037,48 @@ public class Movimentacao {
 			}
 			//PONTOS
 			    //cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
 				resultante = Elemento.PERSONAGEMLEFT;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
 				resultante = Elemento.PERSONAGEMLEFTWATER;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
 				resultante = Elemento.PERSONAGEMLEFTDIRTY;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
 				resultante = Elemento.PERSONAGEMLEFT;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
 				resultante = Elemento.PERSONAGEMLEFTWATER;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
 				resultante = Elemento.PERSONAGEMLEFTDIRTY;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
 				resultante = Elemento.PERSONAGEMLEFT;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
 				resultante = Elemento.PERSONAGEMLEFTWATER;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
 				resultante = Elemento.PERSONAGEMLEFTDIRTY;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
 				resultante = Elemento.PERSONAGEMLEFT;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
 				resultante = Elemento.PERSONAGEMLEFTWATER;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
 				resultante = Elemento.PERSONAGEMLEFTDIRTY;
 			}
 			//VIDA
 			else if(tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA){
-				if(hud.adicionarVida() == true){
+				if(hud.vidaEstaCheia() == false){
 					//cima
 					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
 						resultante = Elemento.PERSONAGEMLEFT;
@@ -1083,7 +1120,7 @@ public class Movimentacao {
 						resultante = Elemento.PERSONAGEMLEFTDIRTY;
 					}
 				}
-				else if(hud.adicionarVida() == false){
+				else if(hud.vidaEstaCheia() == true){
 					//cima
 					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
 						resultante = Elemento.VIDA;
@@ -1296,48 +1333,48 @@ public class Movimentacao {
 			}
 			//PONTOS
 			    //cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
 				resultante = Elemento.PERSONAGEMRIGHT;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
 				resultante = Elemento.PERSONAGEMRIGHTWATER;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
 				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
 				resultante = Elemento.PERSONAGEMRIGHT;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
 				resultante = Elemento.PERSONAGEMRIGHTWATER;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
 				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
 				resultante = Elemento.PERSONAGEMRIGHT;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
 				resultante = Elemento.PERSONAGEMRIGHTWATER;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
 				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
 				resultante = Elemento.PERSONAGEMRIGHT;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
 				resultante = Elemento.PERSONAGEMRIGHTWATER;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.MACA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
 				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
 			}
 			//VIDA
 			else if(tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA){
-				if(hud.adicionarVida() == true){
+				if(hud.vidaEstaCheia() == false){
 					//cima
 					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
 						resultante = Elemento.PERSONAGEMRIGHT;
@@ -1379,7 +1416,7 @@ public class Movimentacao {
 						resultante = Elemento.PERSONAGEMRIGHTDIRTY;
 					}
 				}
-				else if(hud.adicionarVida() == false){
+				else if(hud.vidaEstaCheia() == true){
 					//cima
 					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
 						resultante = Elemento.VIDA;
@@ -1436,4 +1473,5 @@ public class Movimentacao {
 		return p.getLinha() < 0 || p.getLinha() >= tabuleiro.getNumeroLinhas()
 				|| p.getColuna() < 0 || p.getColuna() >= tabuleiro.getNumeroColunas();
 	}
+	
 }
