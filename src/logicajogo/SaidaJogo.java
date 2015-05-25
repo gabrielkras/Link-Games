@@ -12,5 +12,7 @@ public interface SaidaJogo {
 	
 	void recarregarMapa();
 	
+	void mostrarMensagem(String mensagem, String titulo);
+	
 
 }

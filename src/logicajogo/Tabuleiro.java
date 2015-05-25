@@ -55,7 +55,13 @@ public class Tabuleiro {
 
 
 	private void ocultarPortal() {
-		alterarElemento(estruturaMapas.getMapaAtual().obterPosicaoPortalMapa(), Elemento.GRAMA);
+		if(estruturaMapas.getMapaAtual().temPortalNoMapa() == true){
+			alterarElemento(estruturaMapas.getMapaAtual().obterPosicaoPortalMapa(), Elemento.GRAMA);
+		}
+		else{
+			return;
+		}
+		
 	}
 
 	void reexibirPortal() {

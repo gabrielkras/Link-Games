@@ -20,6 +20,7 @@ public class Mapa {
 	private int linha;
 	private int coluna;
 	private int totalDePontosNoMapa = 0;
+	private String mensagemPlaca;
 	
 	public Mapa(Elemento[][] mapa){
 		
@@ -48,19 +49,30 @@ public class Mapa {
 	/**
 	 * Adiciona Mapas que compõem as salas extras do mapa principal*/
 	public void adicionarMapas(Elemento[][] mapa){
-		listaMapa.add(mapa);
+		this.listaMapa.add(mapa);
+		this.indiceMapaAtual = 0;
+	}
+	/**
+	 * Adiciona uma mensagem a placa do mapa*/
+	public void adicionarMensagemMapa(String mensagem){
+		this.mensagemPlaca = mensagem;
+	}
+	/**
+	 * Recupera a mensagem do mapa*/
+	public String lerMensagem(){
+		return this.mensagemPlaca;
 	}
 	/**
 	 * Realiza a troca do mapa, avançando para o proximo da lista*/
 	public void avancarUmMapa(){
 		indiceMapaAtual++;
-		this.mapa = listaMapa.get(indiceMapaAtual);
+		this.mapa = this.listaMapa.get(indiceMapaAtual);
 	}
 	/**
 	 * Realiza a Troca do Mapa, retrocedendo para o mapa anterior*/
 	public void retrocederUmMapa(){
 		indiceMapaAtual--;
-		this.mapa = listaMapa.get(indiceMapaAtual);
+		this.mapa = this.listaMapa.get(indiceMapaAtual);
 	}
 	
 	/**

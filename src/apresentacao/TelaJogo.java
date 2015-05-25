@@ -19,6 +19,7 @@ import javax.swing.RootPaneContainer;
 
 import logicajogo.Direcao;
 import logicajogo.Elemento;
+import logicajogo.EstruturaMapas;
 import logicajogo.Hud;
 import logicajogo.Posicao;
 import logicajogo.SaidaJogo;
@@ -96,6 +97,11 @@ public class TelaJogo implements SaidaJogo {
 	
 	public Hud getHud(){
 		return hud;
+	}
+	
+	@Override
+	public void mostrarMensagem(String mensagem, String titulo){
+		JOptionPane.showMessageDialog(frame, mensagem, titulo, 0, fabricaIcones.obterIcone(Elemento.PERSONAGEMDOWN));
 	}
 
 	@Override
