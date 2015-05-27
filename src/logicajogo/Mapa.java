@@ -3,14 +3,15 @@ package logicajogo;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+
 import com.sun.corba.se.impl.oa.toa.TOA;
 
 /**
- * A classe mapa é responsável por:
- * - Gerenciar Mapa com Multiplas Salas
- * - Gerenciar a troca de Icones no Mapa
- *  
- * */
+ * Classe responsável por efetuar o gerenciamento do mapas
+ * @author Francisco Gonçalves da Mota Longhini
+ * @author Gabriel Sousa Kraszczuk */
 public class Mapa {
 	
 	private Elemento[][] mapa;
@@ -21,6 +22,7 @@ public class Mapa {
 	private int coluna;
 	private int totalDePontosNoMapa = 0;
 	private String mensagemPlaca;
+	private Icon iconeMensagemPlaca = null;
 	
 	public Mapa(Elemento[][] mapa){
 		
@@ -30,7 +32,6 @@ public class Mapa {
 		coluna = mapa[0].length;
 		calcularQuantidadeTotalDePontosNoMapa();
 		armazenarPosicaoPortalMapa();
-		System.out.println(totalDePontosNoMapa);
 	}
 	
 	/**
@@ -54,13 +55,19 @@ public class Mapa {
 	}
 	/**
 	 * Adiciona uma mensagem a placa do mapa*/
-	public void adicionarMensagemMapa(String mensagem){
+	public void adicionarMensagemMapa(String mensagem, Icon icon){
 		this.mensagemPlaca = mensagem;
+		this.iconeMensagemPlaca = icon;
 	}
 	/**
 	 * Recupera a mensagem do mapa*/
 	public String lerMensagem(){
 		return this.mensagemPlaca;
+	}
+	/**
+	 * Retorna o icone da Placa*/
+	public Icon obterIconeMensagem(){
+		return iconeMensagemPlaca;
 	}
 	/**
 	 * Realiza a troca do mapa, avançando para o proximo da lista*/
@@ -76,14 +83,14 @@ public class Mapa {
 	}
 	
 	/**
-	 * Retorna a quantidade total de "Macas" do mapa*/
+	 * Retorna a quantidade total de "Macas"(Pontos) do mapa.
+	 * @return int*/
 	public int obterQuantidadeTotalDePontosNoMapa(){
 		return totalDePontosNoMapa-1;
 	}
 	/**
-	 * Verifica se o mapa atual, possui ou não um portal*
-	 * @return boolean
-	 */
+	 * Verifica se o mapa atual, possui ou não um portal.
+	 * @return boolean */
 	public boolean temPortalNoMapa(){
 		try{
 			posicaoPortais.get(indiceMapaAtual);

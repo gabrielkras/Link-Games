@@ -2,7 +2,9 @@ package logicajogo;
 
 /**
  * Classe responsável por efetuar o gerenciamento de movimentação dos mapas
- * considerando os elementos dispostos no mapa*/
+ * considerando os elementos dispostos no mapa
+ * @author Francisco Gonçalves da Mota Longhini
+ * @author Gabriel Sousa Kraszczuk*/
 public class Movimentacao {
 	
 	private Tabuleiro tabuleiro;
@@ -16,6 +18,15 @@ public class Movimentacao {
 		this.saida = saida;
 		this.hud = hud;
 	}
+	
+	/**
+	 * Método utilizado para atualizar a estrutura de mapa atual sendo executada pelo
+	 * tabuleiro
+	 * @param EstruturaMapas*/
+	public void setEstruturaMapa(EstruturaMapas estrutura){
+		this.estruturaMapas = estrutura;
+	}
+	
 	/**
 	 * Responsável por realizar a movimentação do personagem no mapa, não importando
 	 * o tipo de terreno que o mesmo se encontra
@@ -29,20 +40,10 @@ public class Movimentacao {
 		
 		posicaoAntiga = encontrarPosicaoPersonagem();
 		elementoPosicaoAntiga = tabuleiro.elementoEm(posicaoAntiga);
-		
 		posicaoNova = posicaoAntiga.somar(d);
-		
-//		if(tabuleiro.navegar(posicaoNova) == true){
-//			posicaoNova = new Posicao(5,0);
-//			tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
-//			return;
-//		}
-		
 		if(tabuleiro.navegar(posicaoNova,posicaoAntiga,elementoPosicaoAntiga,d)==true) return;
 		if (tabuleiro.posicaoEhInvalida(posicaoNova)) return;
-		
 		elementoEmNovaPosicao = tabuleiro.elementoEm(posicaoNova);
-		
 		elementoPosicaoNova = retornarElementoDaPosicaoNova(posicaoNova, posicaoAntiga, d);
 		elementoPosicaoAntiga = retornarElementoDaPosicaoAntiga(posicaoAntiga);
 		
@@ -58,6 +59,16 @@ public class Movimentacao {
 				else{
 					tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
 					tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
+					break;
+				}
+				
+			case LAVA:
+				hud.removerVida();
+				if(hud.getVida() <= 0){
+					saida.perderJogo();
+					break;
+				}
+				else{
 					break;
 				}
 				
@@ -78,13 +89,12 @@ public class Movimentacao {
 				tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
 				break;
 			case PLACA:
-				saida.mostrarMensagem(estruturaMapas.getMapaAtual().lerMensagem(), "Inforação Placa!");
+				saida.mostrarMensagem(estruturaMapas.getMapaAtual().lerMensagem(), "Inforação Placa!",estruturaMapas.getMapaAtual().obterIconeMensagem());
 				break;
 			case RUBI:
 				hud.incrementarPontuacao();
 				tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
 				tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
-				tabuleiro.reexibirPortal();
 				break;
 			case PORTAL:
 				saida.passarDeFase();

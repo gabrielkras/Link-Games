@@ -42,12 +42,28 @@ public class Tabuleiro {
 	public Elemento elementoEm(Posicao posicao) {
 		return estruturaMapas.getMapaAtual().getMapa()[posicao.getLinha()][posicao.getColuna()];
 	}
-	
+	/**
+	 * Checa se todos os rubis foram coletados e efetua o movimento
+	 * @param Direcao d*/
 	public void fazerMovimento(Direcao d){
+		if((personagemRecolheuTodosOsRubis()) && (estruturaMapas.getMapaAtual().temPortalNoMapa()) == true){
+			reexibirPortal();
+		}
 		mov.fazerMovimento(d, this.saida);
 		
 	}
 
+	/**
+	 * Verifica se o Personagem recolheu todos os Rubis do Mapa
+	 * @return boolean*/
+	public boolean personagemRecolheuTodosOsRubis(){
+		if(estruturaMapas.getMapaAtual().obterQuantidadeTotalDePontosNoMapa() <= hud.getPontuacao()){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
 
 	public void setHud(Hud hud){
 		this.hud = hud;
@@ -56,7 +72,7 @@ public class Tabuleiro {
 
 	private void ocultarPortal() {
 		if(estruturaMapas.getMapaAtual().temPortalNoMapa() == true){
-			alterarElemento(estruturaMapas.getMapaAtual().obterPosicaoPortalMapa(), Elemento.GRAMA);
+			alterarElemento(estruturaMapas.getMapaAtual().obterPosicaoPortalMapa(), Elemento.PEDRAENFEITE);
 		}
 		else{
 			return;
@@ -104,12 +120,18 @@ public class Tabuleiro {
 		return p.getLinha() < 0 || p.getLinha() >= getNumeroLinhas()
 				|| p.getColuna() < 0 || p.getColuna() >= getNumeroColunas();
 	}
-	
+	/**
+	 * Método responsável por executar a mudança de estrutura de mapa que está sendo exibida ao usuário.
+	 * @param Posicao posicaoNova, Posicao posicaoAntiga, Elemento spritePersonagem, Direcao d
+	 * @return boolean*/
 	public boolean navegar(Posicao posicaoNova, Posicao posicaoAntiga, Elemento spritePersonagem, Direcao d){
 		if((posicaoNova.getColuna() == getNumeroColunas()) && (Direcao.DIREITA == d)){
 			if((estruturaMapas.getDireita() != null) && (estruturaMapas.getMapaAtual().getIndiceDoMapaAtual() == 0)){
 				alterarElemento(posicaoAntiga, spritePersonagem);
-				this.estruturaMapas = estruturaMapas.navegarParaDireita();
+				estruturaMapas = estruturaMapas.navegarParaDireita();
+				
+				mov.setEstruturaMapa(estruturaMapas);
+				
 				Elemento personagem;
 				personagem = mov.retornarElementoDaPosicaoAntiga((mov.encontrarPosicaoPersonagem()));
 				alterarElemento(mov.encontrarPosicaoPersonagem(), personagem);
@@ -125,7 +147,10 @@ public class Tabuleiro {
 		else if((posicaoNova.getColuna() < 0) && (Direcao.ESQUERDA == d)){
 			if((estruturaMapas.getEsquerda() != null) && (estruturaMapas.getMapaAtual().getIndiceDoMapaAtual() == 0)){
 				alterarElemento(posicaoAntiga, spritePersonagem);
-				this.estruturaMapas = estruturaMapas.navegarParaEsquerda();
+				estruturaMapas = estruturaMapas.navegarParaEsquerda();
+				
+				mov.setEstruturaMapa(estruturaMapas);
+				
 				Elemento personagem;
 				personagem = mov.retornarElementoDaPosicaoAntiga((mov.encontrarPosicaoPersonagem()));
 				alterarElemento(mov.encontrarPosicaoPersonagem(), personagem);
@@ -141,7 +166,10 @@ public class Tabuleiro {
 		else if((posicaoNova.getLinha() < 0) &&  (Direcao.CIMA == d)){
 			if((estruturaMapas.getCima() != null) && (estruturaMapas.getMapaAtual().getIndiceDoMapaAtual() == 0)){
 				alterarElemento(posicaoAntiga, spritePersonagem);
-				this.estruturaMapas = estruturaMapas.navegarParaCima();
+				estruturaMapas = estruturaMapas.navegarParaCima();
+				
+				mov.setEstruturaMapa(estruturaMapas);
+				
 				Elemento personagem;
 				personagem = mov.retornarElementoDaPosicaoAntiga((mov.encontrarPosicaoPersonagem()));
 				alterarElemento(mov.encontrarPosicaoPersonagem(), personagem);
@@ -157,7 +185,10 @@ public class Tabuleiro {
 		else if((posicaoNova.getLinha() >= getNumeroLinhas()) &&  (Direcao.BAIXO == d)){
 			if((estruturaMapas.getBaixo() != null)&& (estruturaMapas.getMapaAtual().getIndiceDoMapaAtual() == 0)){
 				alterarElemento(posicaoAntiga, spritePersonagem);
-				this.estruturaMapas = estruturaMapas.navegarParaBaixo();
+				estruturaMapas = estruturaMapas.navegarParaBaixo();
+				
+				mov.setEstruturaMapa(estruturaMapas);
+				
 				Elemento personagem;
 				personagem = mov.retornarElementoDaPosicaoAntiga((mov.encontrarPosicaoPersonagem()));
 				alterarElemento(mov.encontrarPosicaoPersonagem(), personagem);

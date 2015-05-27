@@ -1,5 +1,9 @@
 package logicajogo;
-
+/**
+ * Classe responsável por permitir o mapeamento das estrutura de mapa,
+ * afim de facilitar na locomoção entre os mapas solicitados
+ * @author Francisco Gonçalves da Mota Longhini
+ * @author Gabriel Sousa Kraszczuk*/
 public class EstruturaMapas {
 	
 	private EstruturaMapas cima = null;

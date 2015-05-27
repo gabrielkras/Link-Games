@@ -1,8 +1,10 @@
 package logicajogo;
 
+/**
+ * Classe que cria os elementos do jogo, que poderão ser utilizados nos mapas
+ * @author Francisco Gonçalves da Mota Longhini
+ * @author Gabriel Sousa Kraszczuk*/
 public enum Elemento {
-
-	
 	//ELEMENTOS DO MAPA(AMBIENTE)
 	// caverna
 	PAREDECAVERNACANTOSUPERIORDIREITO("/canto_caverna.jpg",false),
@@ -25,9 +27,9 @@ public enum Elemento {
 	PAREDEGRAMAMEIODIREITO("/",false),
 	PAREDEGRAMAMEIOSUPERIOR("/grama_meio_superior.jpg",false),
 	PAREDEGRANAMEIOINFERIOR("/grama_meio_inferior.jpg",false),
-	
 	AGUA("/agua2.png",true),
 	GRAMA("/grama2.png",true),
+	LAVA("/lava.png",false),
 	TERRA("/terra2.jpg",true),
 	PEDRA("/pedra.jpg",true),
 	PEDRAENFEITE("/pedra_enfeite.jpg",false),
@@ -40,7 +42,7 @@ public enum Elemento {
 	VIDA("/coracao.png",true),
 	SEMVIDA("/coracao2.png",true),
 	
-	//SPTITES PERSONAGEM
+	//SPRITES PERSONAGEM
 	// grama
 	PERSONAGEM("/personagemdown.png",false),
 	PERSONAGEMUP("/personagemup.png",false),
@@ -72,7 +74,6 @@ public enum Elemento {
 	PERSONAGEMDOWNSTONE("/personagemdown.png",false),
 	PERSONAGEMLEFTSTONE("/personagemleft.png",false),
 	PERSONAGEMRIGHTSTONE("/personagemright.png",false),
-	
 	
 	//DEMAIS ELEMENTOS
 	PORTAL("/portal2.png",true),

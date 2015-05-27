@@ -5,11 +5,14 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.LayoutManager;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 import javax.swing.BoxLayout;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuBar;
@@ -42,6 +45,11 @@ public class TelaJogo implements SaidaJogo {
 		this.fabricaIcones = fabricaIcones;
 
 		frame = new JFrame();
+		// Caracteristicas do Frame (Nome, Propriedades e Icone)
+		frame.setTitle("LINK GAMES");
+		frame.setResizable(false);
+		ImageIcon icon = new ImageIcon(getClass().getResource("/Coracao.png"));
+		frame.setIconImage(icon.getImage());
 		
 		// Cria um Container
 		container = new JPanel();
@@ -58,18 +66,10 @@ public class TelaJogo implements SaidaJogo {
 		Hud hud = new Hud(tabuleiro);
 		tabuleiro.setHud(hud);
 		
-		
 		container.add(hud.getHud());
 		container.add(jogo);
 		
 		frame.add(container);
-		
-		//frame.setLayout(new GridLayout(tabuleiro.getNumeroLinhas(), tabuleiro.getNumeroColunas()));
-		//frame.addKeyListener(new TecladoListener());
-		
-		// Titulo do Game
-		frame.setTitle("Pamonha Games");
-
 		preencherTela();
 
 		frame.pack();
@@ -100,8 +100,8 @@ public class TelaJogo implements SaidaJogo {
 	}
 	
 	@Override
-	public void mostrarMensagem(String mensagem, String titulo){
-		JOptionPane.showMessageDialog(frame, mensagem, titulo, 0, fabricaIcones.obterIcone(Elemento.PERSONAGEMDOWN));
+	public void mostrarMensagem(String mensagem, String titulo, Icon imagem){
+		JOptionPane.showMessageDialog(frame, mensagem, titulo, 0, imagem);
 	}
 
 	@Override
@@ -112,12 +112,6 @@ public class TelaJogo implements SaidaJogo {
 	@Override
 	public void alterarElemento(Posicao posicao, Elemento elemento) {
 		int indice = tabuleiro.getNumeroColunas() * posicao.getLinha() + posicao.getColuna();
-		//Component a = jogo.getComponent(indice);
-		//((JLabel) a).setIcon(fabricaIcones.obterIcone(elemento));
-		//jogo.add(a,indice);
-		//((JLabel) frame.getContentPane().getComponent(indice)).setIcon(fabricaIcones.obterIcone(elemento));
-		//((JLabel) jogo.getComponent(indice)).setIcon(fabricaIcones.obterIcone(elemento));
-		//jogo.getComponent(1);
 		jogo.remove(indice); // Remove a Imagem da Posicção
 		jogo.add(new JLabel(fabricaIcones.obterIcone(elemento)), indice); // Adiciona a nova imagem
 		jogo.updateUI();// Atualiza o JPanel
@@ -125,7 +119,7 @@ public class TelaJogo implements SaidaJogo {
 
 	@Override
 	public void passarDeFase() {
-		JOptionPane.showMessageDialog(frame, "Ganhou!", "Ganhou!", JOptionPane.INFORMATION_MESSAGE);
+		JOptionPane.showMessageDialog(frame, "Ganhou!", "Ganhou!", 0,fabricaIcones.obterIcone(Elemento.VIDA));
 		System.exit(0);
 	}
 

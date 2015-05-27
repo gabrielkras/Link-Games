@@ -12,7 +12,11 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
 import apresentacao.FabricaIcones;
-
+/**
+ * Classe Responsável por efetuar o gerenciamento do "HUD"(Tela responsável por
+ * exibir as informações do usuário)
+ * @author Francisco Gonçalves da Mota Longhini
+ * @author Gabriel Sousa Kraszczuk*/
 public class Hud {
 	
 	private JPanel hud;
@@ -38,27 +42,35 @@ public class Hud {
 		this.fabricaIcones = new FabricaIcones();
 		gerarHud();
 	}
-	
+	/**
+	 * Método Responsável por gerar o Hud, Executa métodos auxiliares para mostrar a ordem
+	 * na tela.*/
 	private void gerarHud(){
 		adicionarIconeExperiencia();
 		adicionarIconeVidaCheia();
 		preencherEspacosVazios();
 	}
-	
+	/**
+	 * Método Responsável por preencher os espaços do restantes do gridlayout, para mater a proporção
+	 * do mesmo, já que o tamanho (quantidade de linhas e colunas do mapa) é variável.*/
 	private void preencherEspacosVazios(){
 		int total = quantidadeDeVidaInicial+ 4;
 		for( ; total < tabuleiro.getNumeroColunas(); ++total){
 			hud.add(new JLabel(fabricaIcones.obterIcone(Elemento.NADA)));
 		}
 	}
-	
+	/**
+	 * Método que monta os icones de vida na tela*/
 	private void adicionarIconeVidaCheia(){
 		for(int k = 0; k < quantidadeDeVidaInicial; k++){
 			vidas.add(new JLabel(fabricaIcones.obterIcone(Elemento.VIDA)));
 			hud.add(vidas.get(k));
 		}
 	}
-	
+	/**
+	 * Método de atualiza o HUD.
+	 * 
+	 * Geralmente Executado a cada altração do objeto*/
 	private void atualizarHud(){
 		hud.removeAll();
 		adicionarIconeExperiencia();
@@ -69,6 +81,8 @@ public class Hud {
 		hud.updateUI();// Atualiza o JPanel
 	}
 	
+	/**
+	 * Método que monta o layout gráfico dos Pontos, Icones e Layer*/
 	private void adicionarIconeExperiencia(){
 		
 		Font font = new Font("SansSerif", Font.BOLD, 40);
@@ -88,7 +102,8 @@ public class Hud {
 		hud.add(labelPontos);
 		hud.add(new JLabel(fabricaIcones.obterIcone(Elemento.NADA))); // Separador
 	}
-	
+	/**
+	 * Método Responsável por remover os pontos de vida*/
 	public void removerVida(){
 		//vidas. = new JLabel(fabricaIcones.obterIcone(Elemento.SEMVIDA));
 		vida = vida - 1;
@@ -96,17 +111,12 @@ public class Hud {
 		atualizarHud();
 		
 	}
-	
-	public boolean adicionarVida(){
-		if(verificarSeVidaEstaCheia()==false){
-			vidas.set(vida, new JLabel(fabricaIcones.obterIcone(Elemento.VIDA)));
-			vida = vida + 1;
-			atualizarHud();
-			return true;
-		}
-		else{
-			return false;
-		}
+	/**
+	 * Método que incrementa a vida.*/
+	public void adicionarVida(){
+		vidas.set(vida, new JLabel(fabricaIcones.obterIcone(Elemento.VIDA)));
+		vida = vida + 1;
+		atualizarHud();
 	}
 	
 	public boolean vidaEstaCheia(){

@@ -1,5 +1,8 @@
 package logicajogo;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+
 public interface SaidaJogo {
 
 	void iniciarJogo();
@@ -12,7 +15,7 @@ public interface SaidaJogo {
 	
 	void recarregarMapa();
 	
-	void mostrarMensagem(String mensagem, String titulo);
+	void mostrarMensagem(String mensagem, String titulo, Icon icon);
 	
 
 }
