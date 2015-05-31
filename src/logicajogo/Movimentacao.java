@@ -22,7 +22,7 @@ public class Movimentacao {
 	/**
 	 * Método utilizado para atualizar a estrutura de mapa atual sendo executada pelo
 	 * tabuleiro
-	 * @param EstruturaMapas*/
+	 * @param*/
 	public void setEstruturaMapa(EstruturaMapas estrutura){
 		this.estruturaMapas = estrutura;
 	}
