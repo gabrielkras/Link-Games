@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 
 import logicajogo.Elemento;
 import logicajogo.EstruturaMapas;
-import logicajogo.HashMap;
 import logicajogo.Mapa;
 import logicajogo.Tabuleiro;
 
