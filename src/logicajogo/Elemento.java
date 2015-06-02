@@ -55,25 +55,25 @@ public enum Elemento {
 	PERSONAGEMRIGHTWATER("/personagemrightwater.png",false),
 	PERSONAGEMLEFTWATER("/personagemleftwater.png",false),
 	// terra
-	PERSONAGEMUPDIRTY("/maca.png",false),
-	PERSONAGEMDOWNDIRTY("/maca.png",false),
-	PERSONAGEMLEFTDIRTY("/maca.png",false),
-	PERSONAGEMRIGHTDIRTY("/maca.png",false),
+	PERSONAGEMUPDIRTY("/personagemupdirty.jpg",false),
+	PERSONAGEMDOWNDIRTY("/personagemdowndirty.jpg",false),
+	PERSONAGEMLEFTDIRTY("/personagemleftdirty.jpg",false),
+	PERSONAGEMRIGHTDIRTY("/personagemrightdirty.jpg",false),
 	// terra de caverna1
-	PERSONAGEMUPDIRTYCAVE1("/maca.png",false),
-	PERSONAGEMDOWNDIRTYCAVE1("/maca.png",false),
-	PERSONAGEMLEFTDIRTYCAVE1("/maca.png",false),
-	PERSONAGEMRIGHTDIRTYCAVE1("/maca.png",false),
+	PERSONAGEMUPDIRTYCAVE1("/personagemupcave.jpg",false),
+	PERSONAGEMDOWNDIRTYCAVE1("/personagemdowncave.jpg",false),
+	PERSONAGEMLEFTDIRTYCAVE1("/personagemleftcave.jpg",false),
+	PERSONAGEMRIGHTDIRTYCAVE1("/personagemrightcave.jpg",false),
 	// terra de caverna2
 	PERSONAGEMUPDIRTYCAVE2("/maca.png",false),
 	PERSONAGEMDOWNDIRTYCAVE2("/maca.png",false),
 	PERSONAGEMLEFTDIRTYCAVE2("/maca.png",false),
 	PERSONAGEMRIGHTDIRTYCAVE2("/maca.png",false),
 	// pedra
-	PERSONAGEMUPSTONE("/personagemup.png",false),
-	PERSONAGEMDOWNSTONE("/personagemdown.png",false),
-	PERSONAGEMLEFTSTONE("/personagemleft.png",false),
-	PERSONAGEMRIGHTSTONE("/personagemright.png",false),
+	PERSONAGEMUPSTONE("/personagemupstone.jpg",false),
+	PERSONAGEMDOWNSTONE("/personagemdownstone.jpg",false),
+	PERSONAGEMLEFTSTONE("/personagemleftstone.jpg",false),
+	PERSONAGEMRIGHTSTONE("/personagemrightstone.jpg",false),
 	
 	//DEMAIS ELEMENTOS
 	PORTAL("/portal2.png",true),

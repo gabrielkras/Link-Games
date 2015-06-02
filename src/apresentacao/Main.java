@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 
 import logicajogo.Elemento;
 import logicajogo.EstruturaMapas;
+import logicajogo.HashMap;
 import logicajogo.Mapa;
 import logicajogo.Tabuleiro;
 
@@ -83,6 +84,25 @@ public class Main {
 		Tabuleiro tabuleiro = new Tabuleiro(estruturaMapaIncial);
 		tabuleiro.setSaida(new TelaJogo(tabuleiro, new FabricaIcones()));
 		tabuleiro.iniciarJogo();
+		
+//		HashMap inv = new HashMap(10);
+//		float chaveFinal = inv.armazenarObjeto("CHAVEVERDE");
+//		System.out.println(chaveFinal);
+//		chaveFinal = inv.armazenarObjeto("CHAVEVERDE");
+//		chaveFinal = inv.armazenarObjeto("CHAVEVERDE");
+//		chaveFinal = inv.armazenarObjeto("CHAVEVERDE");
+//		chaveFinal = inv.armazenarObjeto(mapaInicial);
+//		System.out.println(chaveFinal);
+//		System.out.println(inv.retornarObjeto((float) 8.4));
+//		inv.removerObjeto((float) 8);
+//		System.out.println(inv.retornarObjeto((float) 8.2));
+//		chaveFinal = inv.armazenarObjeto("CHAVEVERDE");
+//		System.out.println(chaveFinal);
+//		System.out.println();
+//		System.out.println(inv.retornarObjeto((float) 8.0));
+//		System.out.println(inv.retornarObjeto((float) 8.1));
+//		System.out.println(inv.retornarObjeto((float) 8.2));
+//		System.out.println(inv.retornarObjeto((float) 8.3));
+//		System.out.println(inv.retornarObjeto((float) 9.0));
 	}
-
 }
