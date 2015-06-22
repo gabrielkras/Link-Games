@@ -2,18 +2,21 @@ package logicajogo;
 
 import javax.swing.JLabel;
 
+import apresentacao.Hud;
 import apresentacao.TelaJogo;
 
 public class Tabuleiro {
 
-	private EstruturaMapas estruturaMapas;
+	private MapaGlobal estruturaMapas;
+	private Elemento[][] personagemMapa;
 	
 	private SaidaJogo saida;
-	private Hud hud;
+	private SaidaJogador saidaJogador;
 	private Movimentacao mov;
 	
-	public Tabuleiro(EstruturaMapas estruturaMapas) {
+	public Tabuleiro(MapaGlobal estruturaMapas, int quantidadeDeVidaInicial) {
 		this.estruturaMapas = estruturaMapas;
+		saidaJogador = new Jogador(quantidadeDeVidaInicial);
 	}
 
 	public void setSaida(TelaJogo saida) {
@@ -23,8 +26,12 @@ public class Tabuleiro {
 	public void iniciarJogo() {
 		ocultarPortal();
 		saida.iniciarJogo();
-		this.mov = new Movimentacao(this,estruturaMapas,this.hud,this.saida);
+		this.mov = new Movimentacao(this,estruturaMapas,this.saida, saidaJogador);
 		
+	}
+	
+	public SaidaJogador getSaidaJogador(){
+		return saidaJogador;
 	}
 	
 	public SaidaJogo getSaida(){
@@ -32,47 +39,33 @@ public class Tabuleiro {
 	}
 	
 	public int getNumeroLinhas() {
-		return estruturaMapas.getMapaAtual().getLinha();
+		return estruturaMapas.getMapa().getLinha();
 	}
 
 	public int getNumeroColunas() {
-		return estruturaMapas.getMapaAtual().getColuna();
+		return estruturaMapas.getMapa().getColuna();
 	}
 
 	public Elemento elementoEm(Posicao posicao) {
-		return estruturaMapas.getMapaAtual().getMapa()[posicao.getLinha()][posicao.getColuna()];
+		return estruturaMapas.getMapa().getMapa()[posicao.getLinha()][posicao.getColuna()];
 	}
-	/**
-	 * Checa se todos os rubis foram coletados e efetua o movimento
-	 * @param Direcao d*/
+	
 	public void fazerMovimento(Direcao d){
-		if((personagemRecolheuTodosOsRubis()) && (estruturaMapas.getMapaAtual().temPortalNoMapa()) == true){
+		if((personagemRecolheuTodosOsRubis()) && (estruturaMapas.getMapa().temPortalNoMapa()) == true){
 			reexibirPortal();
 		}
 		mov.fazerMovimento(d, this.saida);
 		
 	}
 
-	/**
-	 * Verifica se o Personagem recolheu todos os Rubis do Mapa
-	 * @return boolean*/
 	public boolean personagemRecolheuTodosOsRubis(){
-		if(estruturaMapas.getMapaAtual().obterQuantidadeTotalDePontosNoMapa() <= hud.getPontuacao()){
-			return true;
-		}
-		else{
-			return false;
-		}
+		return(estruturaMapas.getMapa().obterQuantidadeTotalDePontosNoMapa() <= 
+				saidaJogador.obterQuantidadeDeRubisColetados());
 	}
-
-	public void setHud(Hud hud){
-		this.hud = hud;
-	}
-
 
 	private void ocultarPortal() {
-		if(estruturaMapas.getMapaAtual().temPortalNoMapa() == true){
-			alterarElemento(estruturaMapas.getMapaAtual().obterPosicaoPortalMapa(), Elemento.PEDRAENFEITE);
+		if(estruturaMapas.getMapa().temPortalNoMapa() == true){
+			alterarElemento(estruturaMapas.getMapa().obterPosicaoPortalMapa(), Elemento.PEDRAENFEITE);
 		}
 		else{
 			return;
@@ -81,33 +74,21 @@ public class Tabuleiro {
 	}
 
 	void reexibirPortal() {
-		if(estruturaMapas.getMapaAtual().temPortalNoMapa()==true){
-			alterarElemento(estruturaMapas.getMapaAtual().obterPosicaoPortalMapa(), Elemento.PORTAL);
+		if(estruturaMapas.getMapa().temPortalNoMapa()==true){
+			alterarElemento(estruturaMapas.getMapa().obterPosicaoPortalMapa(), Elemento.PORTAL);
 		}
 		
 	}
 
 	void alterarElemento(Posicao posicao, Elemento e) {
-			estruturaMapas.getMapaAtual().getMapa()[posicao.getLinha()][posicao.getColuna()] = e;
+			estruturaMapas.getMapa().getMapa()[posicao.getLinha()][posicao.getColuna()] = e;
 			saida.alterarElemento(posicao, e);
 	}
 
-	private int quantidadeMacasRestantes() {
-		int ret = 0;
-
-		for (int i = 0; i < estruturaMapas.getMapaAtual().getMapa().length; i++) {
-			for (int j = 0; j < estruturaMapas.getMapaAtual().getMapa()[i].length; j++) {
-				if (estruturaMapas.getMapaAtual().getMapa()[i][j] == Elemento.RUBI) ++ret;
-			}
-		}
-
-		return ret;
-	}
-
 	Posicao acharPosicaoDe(Elemento elemento) {
-		for (int i = 0; i < estruturaMapas.getMapaAtual().getMapa().length; i++) {
-			for (int j = 0; j < estruturaMapas.getMapaAtual().getMapa()[i].length; j++) {
-				if (estruturaMapas.getMapaAtual().getMapa()[i][j] == elemento) {
+		for (int i = 0; i < estruturaMapas.getMapa().getMapa().length; i++) {
+			for (int j = 0; j < estruturaMapas.getMapa().getMapa()[i].length; j++) {
+				if (estruturaMapas.getMapa().getMapa()[i][j] == elemento) {
 					return new Posicao(i, j);
 				}
 			}
@@ -126,7 +107,7 @@ public class Tabuleiro {
 	 * @return boolean*/
 	public boolean navegar(Posicao posicaoNova, Posicao posicaoAntiga, Elemento spritePersonagem, Direcao d){
 		if((posicaoNova.getColuna() == getNumeroColunas()) && (Direcao.DIREITA == d)){
-			if((estruturaMapas.getDireita() != null) && (estruturaMapas.getMapaAtual().getIndiceDoMapaAtual() == 0)){
+			if((estruturaMapas.getMapaDireita() != null) && (estruturaMapas.getMapa().getIndiceDoMapaAtual() == 0)){
 				alterarElemento(posicaoAntiga, spritePersonagem);
 				estruturaMapas = estruturaMapas.navegarParaDireita();
 				
@@ -145,7 +126,7 @@ public class Tabuleiro {
 			}
 		}
 		else if((posicaoNova.getColuna() < 0) && (Direcao.ESQUERDA == d)){
-			if((estruturaMapas.getEsquerda() != null) && (estruturaMapas.getMapaAtual().getIndiceDoMapaAtual() == 0)){
+			if((estruturaMapas.getMapaEsquerda() != null) && (estruturaMapas.getMapa().getIndiceDoMapaAtual() == 0)){
 				alterarElemento(posicaoAntiga, spritePersonagem);
 				estruturaMapas = estruturaMapas.navegarParaEsquerda();
 				
@@ -164,7 +145,7 @@ public class Tabuleiro {
 			}
 		}
 		else if((posicaoNova.getLinha() < 0) &&  (Direcao.CIMA == d)){
-			if((estruturaMapas.getCima() != null) && (estruturaMapas.getMapaAtual().getIndiceDoMapaAtual() == 0)){
+			if((estruturaMapas.getMapaCima() != null) && (estruturaMapas.getMapa().getIndiceDoMapaAtual() == 0)){
 				alterarElemento(posicaoAntiga, spritePersonagem);
 				estruturaMapas = estruturaMapas.navegarParaCima();
 				
@@ -183,7 +164,7 @@ public class Tabuleiro {
 			}
 		}
 		else if((posicaoNova.getLinha() >= getNumeroLinhas()) &&  (Direcao.BAIXO == d)){
-			if((estruturaMapas.getBaixo() != null)&& (estruturaMapas.getMapaAtual().getIndiceDoMapaAtual() == 0)){
+			if((estruturaMapas.getMapaBaixo() != null)&& (estruturaMapas.getMapa().getIndiceDoMapaAtual() == 0)){
 				alterarElemento(posicaoAntiga, spritePersonagem);
 				estruturaMapas = estruturaMapas.navegarParaBaixo();
 				

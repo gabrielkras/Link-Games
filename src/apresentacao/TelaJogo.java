@@ -22,8 +22,7 @@ import javax.swing.RootPaneContainer;
 
 import logicajogo.Direcao;
 import logicajogo.Elemento;
-import logicajogo.EstruturaMapas;
-import logicajogo.Hud;
+import logicajogo.MapaGlobal;
 import logicajogo.Posicao;
 import logicajogo.SaidaJogo;
 import logicajogo.Tabuleiro;
@@ -34,7 +33,8 @@ public class TelaJogo implements SaidaJogo {
 	private FabricaIcones fabricaIcones;
 	private JFrame frame;
 	
-	private JPanel jogo; // Tela Jogo
+	private JPanel cenario; // Tela Jogo
+	private JPanel jogador;
 	private Hud hud; // Tela Hud
 	private JPanel container; // Container contendo as Estrutura Jogo e HUD
 	
@@ -56,20 +56,26 @@ public class TelaJogo implements SaidaJogo {
 		container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
 		
 		// Cria o JPanel do Jogo
-		jogo = new JPanel();
-		jogo.setLayout(new GridLayout(tabuleiro.getNumeroLinhas(), tabuleiro.getNumeroColunas()));
+		cenario = new JPanel();
+		cenario.setLayout(new GridLayout(tabuleiro.getNumeroLinhas(), tabuleiro.getNumeroColunas()));
+		jogador = new JPanel();
+		jogador.setLayout(new GridLayout(tabuleiro.getNumeroLinhas(), tabuleiro.getNumeroColunas()));
+		
+		jogador.add(new JLabel(fabricaIcones.obterIcone(Elemento.LAVA)));
+		jogador.setOpaque(false);
 		
 		//Adiciona a Detecção do Teclado
 		frame.addKeyListener(new TecladoListener());
 		
-		// Cria o JPanel do HUD
-		Hud hud = new Hud(tabuleiro);
-		tabuleiro.setHud(hud);
 		
-		container.add(hud.getHud());
-		container.add(jogo);
+		// Cria o JPanel do HUD
+		hud = new Hud(tabuleiro.getSaidaJogador(),tabuleiro.getNumeroColunas());
+		container.add(hud);
+		container.add(cenario);
+		
 		
 		frame.add(container);
+		
 		preencherTela();
 
 		frame.pack();
@@ -81,22 +87,18 @@ public class TelaJogo implements SaidaJogo {
 	private void preencherTela() {
 		for (int i = 0; i < tabuleiro.getNumeroLinhas(); i++) {
 			for (int j = 0; j < tabuleiro.getNumeroColunas(); j++) {
-				 jogo.add(new JLabel(fabricaIcones.obterIcone(tabuleiro.elementoEm(new Posicao(i, j)))));
+				 cenario.add(new JLabel(fabricaIcones.obterIcone(tabuleiro.elementoEm(new Posicao(i, j)))));
 			}
 		}
 	}
 	
 	public void recarregarMapa(){
-		jogo.removeAll();
+		cenario.removeAll();
 		for (int i = 0; i < tabuleiro.getNumeroLinhas(); i++) {
 			for (int j = 0; j < tabuleiro.getNumeroColunas(); j++) {
-				 jogo.add(new JLabel(fabricaIcones.obterIcone(tabuleiro.elementoEm(new Posicao(i, j)))));
+				 cenario.add(new JLabel(fabricaIcones.obterIcone(tabuleiro.elementoEm(new Posicao(i, j)))));
 			}
 		}
-	}
-	
-	public Hud getHud(){
-		return hud;
 	}
 	
 	@Override
@@ -112,9 +114,10 @@ public class TelaJogo implements SaidaJogo {
 	@Override
 	public void alterarElemento(Posicao posicao, Elemento elemento) {
 		int indice = tabuleiro.getNumeroColunas() * posicao.getLinha() + posicao.getColuna();
-		jogo.remove(indice); // Remove a Imagem da Posicção
-		jogo.add(new JLabel(fabricaIcones.obterIcone(elemento)), indice); // Adiciona a nova imagem
-		jogo.updateUI();// Atualiza o JPanel
+		cenario.remove(indice); // Remove a Imagem da Posicção
+		cenario.add(new JLabel(fabricaIcones.obterIcone(elemento)), indice); // Adiciona a nova imagem
+		cenario.updateUI();// Atualiza o JPanel
+		hud.atualizarHud();
 	}
 
 	@Override

@@ -1,36 +1,25 @@
 package logicajogo;
 
-/**
- * Classe responsável por efetuar o gerenciamento de movimentação dos mapas
- * considerando os elementos dispostos no mapa
- * @author Francisco Gonçalves da Mota Longhini
- * @author Gabriel Sousa Kraszczuk*/
+import apresentacao.Hud;
+
 public class Movimentacao {
 	
 	private Tabuleiro tabuleiro;
-	private EstruturaMapas estruturaMapas;
-	private Hud hud;
+	private SaidaJogador saidaJogador;
+	private MapaGlobal estruturaMapas;
 	private SaidaJogo saida;
 	
-	public Movimentacao(Tabuleiro tabuleiro, EstruturaMapas estruturaMapas, Hud hud, SaidaJogo saida){
+	public Movimentacao(Tabuleiro tabuleiro, MapaGlobal estruturaMapas, SaidaJogo saida, SaidaJogador saidaJogador){
 		this.estruturaMapas = estruturaMapas;
 		this.tabuleiro = tabuleiro;
 		this.saida = saida;
-		this.hud = hud;
+		this.saidaJogador = saidaJogador;
 	}
 	
-	/**
-	 * Método utilizado para atualizar a estrutura de mapa atual sendo executada pelo
-	 * tabuleiro
-	 * @param EstruturaMapas*/
-	public void setEstruturaMapa(EstruturaMapas estrutura){
+	public void setEstruturaMapa(MapaGlobal estrutura){
 		this.estruturaMapas = estrutura;
 	}
 	
-	/**
-	 * Responsável por realizar a movimentação do personagem no mapa, não importando
-	 * o tipo de terreno que o mesmo se encontra
-	 * @param Direcao d*/	
 	public void fazerMovimento(Direcao d, SaidaJogo saida){
 		Posicao posicaoAntiga = null;
 		Posicao posicaoNova = null;
@@ -49,8 +38,8 @@ public class Movimentacao {
 		
 		switch (elementoEmNovaPosicao){
 			case AGUA:
-				hud.removerVida();
-				if(hud.getVida() <= 0){
+				saidaJogador.sofrerDano(1);
+				if(saidaJogador.obterQuantidadeDeVida() <= 0){
 					tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
 					tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
 					saida.perderJogo();
@@ -63,8 +52,8 @@ public class Movimentacao {
 				}
 				
 			case LAVA:
-				hud.removerVida();
-				if(hud.getVida() <= 0){
+				saidaJogador.sofrerDano(1);
+				if(saidaJogador.obterQuantidadeDeVida() <= 0){
 					saida.perderJogo();
 					break;
 				}
@@ -76,11 +65,11 @@ public class Movimentacao {
 				tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
 				tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
 				break;
-			case TERRACAVERNA1:
+			case TERRA_CAVERNA1:
 				tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
 				tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
 				break;
-			case TERRACAVERNA2:
+			case TERRA_CAVERNA2:
 				tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
 				tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
 				break;
@@ -89,10 +78,10 @@ public class Movimentacao {
 				tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
 				break;
 			case PLACA:
-				saida.mostrarMensagem(estruturaMapas.getMapaAtual().lerMensagem(), "Inforação Placa!",estruturaMapas.getMapaAtual().obterIconeMensagem());
+				saida.mostrarMensagem(estruturaMapas.getMapa().lerMensagem(), "Inforação Placa!",estruturaMapas.getMapa().obterIconeMensagem());
 				break;
 			case RUBI:
-				hud.incrementarPontuacao();
+				saidaJogador.coletarRubi();
 				tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
 				tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
 				break;
@@ -102,11 +91,11 @@ public class Movimentacao {
 				tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
 				break;
 			case VIDA:
-				if(hud.vidaEstaCheia() == true){
+				if(saidaJogador.vidaEstaCheia()){
 					break;
 				}
 				else{
-					hud.adicionarVida();
+					saidaJogador.coletarVida();
 					tabuleiro.alterarElemento(posicaoNova, elementoPosicaoNova);
 					tabuleiro.alterarElemento(posicaoAntiga, elementoPosicaoAntiga);
 					break;
@@ -114,14 +103,14 @@ public class Movimentacao {
 				
 			case PASSAGEM:
 				tabuleiro.alterarElemento(posicaoNova, Elemento.PASSAGEM);
-				estruturaMapas.getMapaAtual().avancarUmMapa();
+				estruturaMapas.getMapa().avancarUmMapa();
 				tabuleiro.alterarElemento(encontrarPosicaoPersonagem(), tabuleiro.elementoEm(encontrarPosicaoPersonagem()));
 				this.saida.recarregarMapa();
 				break;
 			
 			case PASSAGEMVOLTA:
 				tabuleiro.alterarElemento(posicaoNova, Elemento.PASSAGEMVOLTA);
-				estruturaMapas.getMapaAtual().retrocederUmMapa();
+				estruturaMapas.getMapa().retrocederUmMapa();
 				tabuleiro.alterarElemento(encontrarPosicaoPersonagem(), tabuleiro.elementoEm(encontrarPosicaoPersonagem()));
 				this.saida.recarregarMapa();
 				break;
@@ -140,901 +129,829 @@ public class Movimentacao {
 		
 	}
 	
-	
-	/**
-	 * Método responsável por encontrar a posição do personagem no mapa
-	 * @param Direcao d
-	 * @return posicaoAntiga*/
 	public Posicao encontrarPosicaoPersonagem(){
 		Posicao posicao = null;
 		
 			// Personagem na Grama
-			 if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM);
+			 if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_GRAMA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_GRAMA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMUP)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMUP);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_CIMA_GRAMA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_CIMA_GRAMA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMDOWN)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMDOWN);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_BAIXO_GRAMA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_BAIXO_GRAMA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMLEFT)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMLEFT);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_ESQUERDA_GRAMA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_ESQUERDA_GRAMA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMRIGHT)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMRIGHT);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_DIREITA_GRAMA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_DIREITA_GRAMA);
 			 }
 			 
 			 // Personagem na Agua
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMUPWATER)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMUPWATER);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_CIMA_AGUA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_CIMA_AGUA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMDOWNWATER);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_BAIXO_AGUA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_BAIXO_AGUA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMLEFTWATER);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_DIREITA_AGUA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_DIREITA_AGUA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMRIGHTWATER);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_ESQUERDA_AGUA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_ESQUERDA_AGUA);
 			 }
 			 
 			 // Personagem na Terra
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMUPDIRTY);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_CIMA_TERRA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_CIMA_TERRA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTY);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_BAIXO_TERRA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_BAIXO_TERRA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTY);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_ESQUERDA_TERRA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_ESQUERDA_TERRA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTY);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_DIREITA_TERRA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_DIREITA_TERRA);
 			 }
 			 
 			// Personagem na Terra de Caverna
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMUPDIRTYCAVE1)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMUPDIRTYCAVE1);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTYCAVE1)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTYCAVE1);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTYCAVE1)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTYCAVE1);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTYCAVE1)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTYCAVE1);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMUPDIRTYCAVE2)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMUPDIRTYCAVE2);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTYCAVE2)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMDOWNDIRTYCAVE2);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTYCAVE2)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMLEFTDIRTYCAVE2);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTYCAVE2)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMRIGHTDIRTYCAVE2);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA);
 			 }
 			 
 			 // Personagem na Pedra
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMUPSTONE)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMUPSTONE);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_CIMA_PEDRA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_CIMA_PEDRA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMDOWNSTONE)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMDOWNSTONE);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_BAIXO_PEDRA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_BAIXO_PEDRA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMLEFTSTONE)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMLEFTSTONE);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_ESQUERDA_PEDRA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_ESQUERDA_PEDRA);
 			 }
-			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMRIGHTSTONE)!= null){
-				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEMRIGHTSTONE);
+			 else if(tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_DIREITA_PEDRA)!= null){
+				 posicao = tabuleiro.acharPosicaoDe(Elemento.PERSONAGEM_DIREITA_PEDRA);
 			 }
 		return posicao;
 		
 	}
 	
-	/**
-	 * Método responsável por retornar o elemento correto da posicao antiga,
-	 * depois do movimento
-	 * @param Posicao posicaoAntiga
-	 * @return Elemento*/
 	public Elemento retornarElementoDaPosicaoAntiga(Posicao posicaoAntiga){
 		Elemento resultante = null;
+		
 		// CASO GRAMA
-		if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM){
-			resultante =  Elemento.GRAMA;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP){
-			resultante =  Elemento.GRAMA;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN){
-			resultante =  Elemento.GRAMA;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT){
-			resultante =  Elemento.GRAMA;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT){
+		if(tabuleiro.elementoEm(posicaoAntiga).name().endsWith("GRAMA")){
 			resultante =  Elemento.GRAMA;
 		}
 		//CASO AGUA
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER){
-			resultante =  Elemento.AGUA;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER){
-			resultante =  Elemento.AGUA;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER){
-			resultante =  Elemento.AGUA;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER){
+		else if(tabuleiro.elementoEm(posicaoAntiga).name().endsWith("AGUA")){
 			resultante =  Elemento.AGUA;
 		}
 		//CASO TERRA
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY){
-			resultante =  Elemento.TERRA;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY){
-			resultante =  Elemento.TERRA;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY){
-			resultante =  Elemento.TERRA;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY){
+		else if(tabuleiro.elementoEm(posicaoAntiga).name().endsWith("TERRA")){
 			resultante =  Elemento.TERRA;
 		}
 		//CASO TERRA DE CAVERNA
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1){
-			resultante =  Elemento.TERRACAVERNA1;
+		else if(tabuleiro.elementoEm(posicaoAntiga).name().endsWith("TERRA_CAVERNA")){
+			resultante =  Elemento.TERRA_CAVERNA1;
 		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1){
-			resultante =  Elemento.TERRACAVERNA1;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1){
-			resultante =  Elemento.TERRACAVERNA1;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1){
-			resultante =  Elemento.TERRACAVERNA1;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2){
-			resultante =  Elemento.TERRACAVERNA2;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2){
-			resultante =  Elemento.TERRACAVERNA2;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2){
-			resultante =  Elemento.TERRACAVERNA2;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2){
-			resultante =  Elemento.TERRACAVERNA2;
+		else if(tabuleiro.elementoEm(posicaoAntiga).name().endsWith("TERRA2_CAVERNA")){
+			resultante =  Elemento.TERRA_CAVERNA2;
 		}
 		//CASO PEDRA
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE){
-			resultante =  Elemento.PEDRA;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE){
-			resultante =  Elemento.PEDRA;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE){
-			resultante =  Elemento.PEDRA;
-		}
-		else if(tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE){
+		else if(tabuleiro.elementoEm(posicaoAntiga).name().endsWith("PEDRA")){
 			resultante =  Elemento.PEDRA;
 		}
 		
 		return resultante;
 	}
 
-	/**
-	 * Método responsável por calcular as possibilidades de locomoção no mapa,
-	 * ele efetua o possivel elemento a ser retornado de acordo com a direcao
-	 * selecionada
-	 * @param Posicao posicaoNova, Posicao posicaoAntiga, Direcao d
-	 * @return Elemento*/
 	private Elemento retornarElementoDaPosicaoNova(Posicao posicaoNova, Posicao posicaoAntiga, Direcao d){
 		Elemento elementoPosicaoNova = null;
 		Elemento resultante = null;
 		tabuleiro.elementoEm(posicaoNova);
 		
 		
-		if((elementoPosicaoNova == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM)){
-			resultante = Elemento.PERSONAGEMDOWNWATER;
+		if((elementoPosicaoNova == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_GRAMA)){
+			resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 		}
 		else if(Direcao.CIMA == d){
 			// AGUA
 				//cima
-			if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
 			    //baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
 			     //esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
 			      //direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
 			//GRAMA
 				 //cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
 			     //baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
 			//TERRA
 				//cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
 			//TERRA DE CAVERNA 1
 				//cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
 			
 			//TERRA DE CAVERNA 2
 				//cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
 			//PEDRA
 				//cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
 			//PONTOS
 			    //cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMUP;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMUPWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMUPDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMUPSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 			}
 			//VIDA
 			else if(tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA){
-				if(hud.vidaEstaCheia() == false){
+				if(!saidaJogador.vidaEstaCheia()){
 					//cima
-					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-						resultante = Elemento.PERSONAGEMUP;
+					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+						resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-						resultante = Elemento.PERSONAGEMUPWATER;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+						resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-						resultante = Elemento.PERSONAGEMUPDIRTY;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+						resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-						resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-						resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-						resultante = Elemento.PERSONAGEMUPSTONE;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+						resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 					}
 					//baixo
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-						resultante = Elemento.PERSONAGEMUP;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+						resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-						resultante = Elemento.PERSONAGEMUPWATER;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+						resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-						resultante = Elemento.PERSONAGEMUPDIRTY;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+						resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-						resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-						resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-						resultante = Elemento.PERSONAGEMUPSTONE;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+						resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 					}
 					//esquerda
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-						resultante = Elemento.PERSONAGEMUP;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+						resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-						resultante = Elemento.PERSONAGEMUPWATER;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+						resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-						resultante = Elemento.PERSONAGEMUPDIRTY;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+						resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-						resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-						resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-						resultante = Elemento.PERSONAGEMUPSTONE;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+						resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 					}
 					//direita
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-						resultante = Elemento.PERSONAGEMUP;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+						resultante = Elemento.PERSONAGEM_CIMA_GRAMA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-						resultante = Elemento.PERSONAGEMUPWATER;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+						resultante = Elemento.PERSONAGEM_CIMA_AGUA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-						resultante = Elemento.PERSONAGEMUPDIRTY;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+						resultante = Elemento.PERSONAGEM_CIMA_TERRA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-						resultante = Elemento.PERSONAGEMUPDIRTYCAVE1;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-						resultante = Elemento.PERSONAGEMUPDIRTYCAVE2;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-						resultante = Elemento.PERSONAGEMUPSTONE;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+						resultante = Elemento.PERSONAGEM_CIMA_PEDRA;
 					}
 				}
-				else if(!hud.vidaEstaCheia() == true){
+				else if(saidaJogador.vidaEstaCheia()){
 					//cima
-					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
+					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
 						resultante = Elemento.VIDA;
 					}
 					//baixo
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
 						resultante = Elemento.VIDA;
 					}
 					//esquerda
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
 						resultante = Elemento.VIDA;
 					}
 					//direita
-					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
+					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
 						resultante = Elemento.VIDA;
 					}
 				}
@@ -1044,703 +961,703 @@ public class Movimentacao {
 		else if(Direcao.BAIXO == d){
 			// AGUA
 				//cima
-			if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
 			    //baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
 			     //esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
 			      //direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
 			//GRAMA
 				 //cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
 			     //baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
 			//TERRA
 				//cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
 			
 			//TERRA DE CAVERNA 1
 				//cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
 			
 			//TERRA DE CAVERNA 2
 				//cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
 			//PEDRA
 				//cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
 			//PONTOS
 			    //cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMDOWN;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMDOWNWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMDOWNSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 			}
 			//VIDA
 			else if(tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA){
-				if(hud.vidaEstaCheia() == false){
+				if(!saidaJogador.vidaEstaCheia()){
 					//cima
-					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-						resultante = Elemento.PERSONAGEMDOWN;
+					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-						resultante = Elemento.PERSONAGEMDOWNWATER;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-						resultante = Elemento.PERSONAGEMDOWNDIRTY;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-						resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-						resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-						resultante = Elemento.PERSONAGEMDOWNSTONE;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 					}
 					//baixo
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-						resultante = Elemento.PERSONAGEMDOWN;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-						resultante = Elemento.PERSONAGEMDOWNWATER;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-						resultante = Elemento.PERSONAGEMDOWNDIRTY;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-						resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-						resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-						resultante = Elemento.PERSONAGEMDOWNSTONE;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 					}
 					//esquerda
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-						resultante = Elemento.PERSONAGEMDOWN;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-						resultante = Elemento.PERSONAGEMDOWNWATER;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-						resultante = Elemento.PERSONAGEMDOWNDIRTY;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-						resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-						resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-						resultante = Elemento.PERSONAGEMDOWNSTONE;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 					}
 					//direita
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-						resultante = Elemento.PERSONAGEMDOWN;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_GRAMA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-						resultante = Elemento.PERSONAGEMDOWNWATER;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_AGUA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-						resultante = Elemento.PERSONAGEMDOWNDIRTY;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_TERRA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-						resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE1;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-						resultante = Elemento.PERSONAGEMDOWNDIRTYCAVE2;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-						resultante = Elemento.PERSONAGEMDOWNSTONE;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+						resultante = Elemento.PERSONAGEM_BAIXO_PEDRA;
 					}
 				}
-				else if(hud.vidaEstaCheia() == true){
+				else if(saidaJogador.vidaEstaCheia()){
 					//cima
-					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
+					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
 						resultante = Elemento.VIDA;
 					}
 					//baixo
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
 						resultante = Elemento.VIDA;
 					}
 					//esquerda
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
 						resultante = Elemento.VIDA;
 					}
 					//direita
-					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
+					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
 						resultante = Elemento.VIDA;
 					}
 				}
@@ -1750,690 +1667,690 @@ public class Movimentacao {
 		else if(Direcao.ESQUERDA == d){
 			// AGUA
 				//cima
-			if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
 			    //baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
 			     //esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
 			      //direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
 			//GRAMA
 				 //cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
 			     //baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
 			//TERRA
 				//cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
 			
 			//TERRA DE CAVERNA 1
 				//cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
 			
 			
 			//TERRA DE CAVERNA 2
 				//cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
 			//PEDRA
 				//cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
 			//PONTOS
 			    //cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMLEFTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
 			
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMLEFT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMLEFTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 			}
 			//VIDA
 			else if(tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA){
-				if(hud.vidaEstaCheia() == false){
+				if(!saidaJogador.vidaEstaCheia()){
 					//cima
-					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-						resultante = Elemento.PERSONAGEMLEFT;
+					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-						resultante = Elemento.PERSONAGEMLEFTWATER;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-						resultante = Elemento.PERSONAGEMLEFTDIRTY;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-						resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-						resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-						resultante = Elemento.PERSONAGEMLEFTSTONE;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 					}
 					//baixo
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-						resultante = Elemento.PERSONAGEMLEFT;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-						resultante = Elemento.PERSONAGEMLEFTWATER;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-						resultante = Elemento.PERSONAGEMLEFTDIRTY;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-						resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-						resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-						resultante = Elemento.PERSONAGEMLEFTSTONE;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 					}
 					//esquerda
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-						resultante = Elemento.PERSONAGEMLEFT;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-						resultante = Elemento.PERSONAGEMLEFTWATER;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-						resultante = Elemento.PERSONAGEMLEFTDIRTY;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-						resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-						resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-						resultante = Elemento.PERSONAGEMLEFTSTONE;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 					}
 					//direita
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-						resultante = Elemento.PERSONAGEMLEFT;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_GRAMA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-						resultante = Elemento.PERSONAGEMLEFTWATER;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_AGUA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-						resultante = Elemento.PERSONAGEMLEFTDIRTY;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-						resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE1;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-						resultante = Elemento.PERSONAGEMLEFTDIRTYCAVE2;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-						resultante = Elemento.PERSONAGEMLEFTSTONE;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_PEDRA;
 					}
 				}
-				else if(hud.vidaEstaCheia() == true){
+				else if(saidaJogador.vidaEstaCheia()){
 					//cima
-					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
+					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
 						resultante = Elemento.VIDA;
 					}
 					//baixo
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
 						resultante = Elemento.VIDA;
 					}
 					//esquerda
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
 						resultante = Elemento.VIDA;
 					}
 					//direita
-					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
+					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
 						resultante = Elemento.VIDA;
 					}
 				}
@@ -2444,701 +2361,701 @@ public class Movimentacao {
 		else if(Direcao.DIREITA== d){
 			// AGUA
 				//cima
-			if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
 			    //baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
 			     //esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
 			      //direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.AGUA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
 			//GRAMA
 				 //cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
 			     //baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.GRAMA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
 			//TERRA
 				//cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
 			
 			//TERRA DE CAVERNA 1
 				//cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA1) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
 			
 			//TERRA DE CAVERNA 2
 				//cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRACAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.TERRA_CAVERNA2) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
 			
 			//PEDRA
 				//cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova)== Elemento.PEDRA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
 			//PONTOS
 			    //cima
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
 				//baixo
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
 				//esquerda
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
 				//direita
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-				resultante = Elemento.PERSONAGEMRIGHT;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-				resultante = Elemento.PERSONAGEMRIGHTWATER;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+				resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-				resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 			}
-			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-				resultante = Elemento.PERSONAGEMRIGHTSTONE;
+			else if((tabuleiro.elementoEm(posicaoNova) == Elemento.RUBI) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+				resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 			}
 			//VIDA
 			else if(tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA){
-				if(hud.vidaEstaCheia() == false){
+				if(!saidaJogador.vidaEstaCheia()){
 					//cima
-					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
-						resultante = Elemento.PERSONAGEMRIGHT;
+					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
-						resultante = Elemento.PERSONAGEMRIGHTWATER;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
-						resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
-						resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
-						resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
-						resultante = Elemento.PERSONAGEMRIGHTSTONE;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 					}
 					//baixo
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
-						resultante = Elemento.PERSONAGEMRIGHT;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
-						resultante = Elemento.PERSONAGEMRIGHTWATER;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
-						resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
-						resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
-						resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
-						resultante = Elemento.PERSONAGEMRIGHTSTONE;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 					}
 					//esquerda
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
-						resultante = Elemento.PERSONAGEMRIGHT;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
-						resultante = Elemento.PERSONAGEMRIGHTWATER;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
-						resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
-						resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
-						resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
-						resultante = Elemento.PERSONAGEMRIGHTSTONE;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 					}
 					//direita
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
-						resultante = Elemento.PERSONAGEMRIGHT;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_GRAMA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
-						resultante = Elemento.PERSONAGEMRIGHTWATER;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
+						resultante = Elemento.PERSONAGEM_ESQUERDA_AGUA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
-						resultante = Elemento.PERSONAGEMRIGHTDIRTY;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_TERRA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
-						resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE1;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
-						resultante = Elemento.PERSONAGEMRIGHTDIRTYCAVE2;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
-						resultante = Elemento.PERSONAGEMRIGHTSTONE;
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
+						resultante = Elemento.PERSONAGEM_DIREITA_PEDRA;
 					}
 				}
-				else if(hud.vidaEstaCheia() == true){
+				else if(saidaJogador.vidaEstaCheia()){
 					//cima
-					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUP)){
+					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_GRAMA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPWATER)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_AGUA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTY)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE1)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPDIRTYCAVE2)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_TERRA2_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMUPSTONE)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_CIMA_PEDRA)){
 						resultante = Elemento.VIDA;
 					}
 					//baixo
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWN)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_GRAMA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNWATER)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_AGUA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTY)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE1)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNDIRTYCAVE2)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_TERRA2_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMDOWNSTONE)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_BAIXO_PEDRA)){
 						resultante = Elemento.VIDA;
 					}
 					//esquerda
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFT)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_GRAMA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTWATER)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_AGUA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTY)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE1)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTDIRTYCAVE2)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_TERRA2_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMLEFTSTONE)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_PEDRA)){
 						resultante = Elemento.VIDA;
 					}
 					//direita
-					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHT)){
+					if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_GRAMA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTWATER)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_ESQUERDA_AGUA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTY)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE1)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTDIRTYCAVE2)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_TERRA2_CAVERNA)){
 						resultante = Elemento.VIDA;
 					}
-					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEMRIGHTSTONE)){
+					else if((tabuleiro.elementoEm(posicaoNova) == Elemento.VIDA) && (tabuleiro.elementoEm(posicaoAntiga) == Elemento.PERSONAGEM_DIREITA_PEDRA)){
 						resultante = Elemento.VIDA;
 					}
 				}
@@ -3149,13 +3066,4 @@ public class Movimentacao {
 		return resultante;
 		
 	}
-	
-	/**
-	 * Método que verifica se a posição é invalida
-	 * @param Posicao p*/
-	private boolean posicaoEhInvalida(Posicao p) {
-		return p.getLinha() < 0 || p.getLinha() >= tabuleiro.getNumeroLinhas()
-				|| p.getColuna() < 0 || p.getColuna() >= tabuleiro.getNumeroColunas();
-	}
-	
 }

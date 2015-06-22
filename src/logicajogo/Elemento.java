@@ -1,32 +1,28 @@
 package logicajogo;
 
-/**
- * Classe que cria os elementos do jogo, que poderão ser utilizados nos mapas
- * @author Francisco Gonçalves da Mota Longhini
- * @author Gabriel Sousa Kraszczuk*/
 public enum Elemento {
 	//ELEMENTOS DO MAPA(AMBIENTE)
 	// caverna
-	PAREDECAVERNACANTOSUPERIORDIREITO("/canto_caverna.jpg",false),
-	PAREDECAVERNACANTOINFERIORDIREITO("/canto_caverna2.jpg",false),
-	PAREDECAVERNACANTOINFERIORESQUERDO("/canto_caverna3.jpg",false),
-	PAREDECAVERNACANTOSUPERIORESQUERDO("/canto_caverna4.jpg",false),
-	PAREDECAVERNAMEIOESQUERDO("/meio_lateral2_caverna.jpg",false),
-	PAREDECAVERNAMEIODIREITO("/meio_lateral1_caverna.jpg",false),
-	PAREDECAVERNAMEIOSUPERIOR("/meio_superior_caverna.jpg",false),
-	PAREDECAVERNAMEIOINFERIOR("/meio_inferior_caverna.jpg",false),
-	TERRACAVERNA1("/chao_caverna.jpg",true),
-	TERRACAVERNA2("/chao_caverna2.jpg",true),
+	PAREDE_CAVERNA_CANTO_SUPERIOR_DIREITO("/canto_caverna.jpg",false),
+	PAREDE_CAVERNA_CANTO_INFERIOR_DIREITO("/canto_caverna2.jpg",false),
+	PAREDE_CAVERNA_CANTO_INFERIOR_ESQUERDO("/canto_caverna3.jpg",false),
+	PAREDE_CAVERNA_CANTO_SUPERIOR_ESQUERDO("/canto_caverna4.jpg",false),
+	PAREDE_CAVERNA_MEIO_ESQUERDO("/meio_lateral2_caverna.jpg",false),
+	PAREDE_CAVERNA_MEIO_DIREITO("/meio_lateral1_caverna.jpg",false),
+	PAREDE_CAVERNA_MEIO_SUPERIOR("/meio_superior_caverna.jpg",false),
+	PAREDE_CAVERNA_MEIO_INFERIOR("/meio_inferior_caverna.jpg",false),
+	TERRA_CAVERNA1("/chao_caverna.jpg",true),
+	TERRA_CAVERNA2("/chao_caverna2.jpg",true),
 	
 	// normal
-	PAREDEGRAMACANTOSUPERIORDIREITO("/grama_canto_superior_direito.jpg",false),
-	PAREDEGRAMACANTOINFERIORDIREITO("/grama_canto_inferior_direito.jpg",false),
-	PAREDEGRAMACANTOINFERIORESQUERDO("/grama_canto_inferior_esquerdo.jpg",false),
-	PAREDEGRAMACANTOSUPERIORESQUERDO("/grama_canto_superior_esquerdo.jpg",false),
-	PAREDEGRAMAMEIOESQUERDO("/",false),
-	PAREDEGRAMAMEIODIREITO("/",false),
-	PAREDEGRAMAMEIOSUPERIOR("/grama_meio_superior.jpg",false),
-	PAREDEGRANAMEIOINFERIOR("/grama_meio_inferior.jpg",false),
+	PAREDE_GRAMA_CANTO_SUPERIOR_DIREITO("/grama_canto_superior_direito.jpg",false),
+	PAREDE_GRAMA_CANTO_INFERIOR_DIREITO("/grama_canto_inferior_direito.jpg",false),
+	PAREDE_GRAMA_CANTO_INFERIOR_ESQUERDO("/grama_canto_inferior_esquerdo.jpg",false),
+	PAREDE_GRAMA_CANTO_SUPERIOR_ESQUERDO("/grama_canto_superior_esquerdo.jpg",false),
+	PAREDE_GRAMA_MEIO_ESQUERDO("/",false),
+	PAREDE_GRAMA_MEIO_DIREITO("/",false),
+	PAREDE_GRAMA_MEIO_SUPERIOR("/grama_meio_superior.jpg",false),
+	PAREDE_GRAMA_MEIO_INFERIOR("/grama_meio_inferior.jpg",false),
 	AGUA("/agua2.png",true),
 	GRAMA("/grama2.png",true),
 	LAVA("/lava.png",false),
@@ -44,36 +40,36 @@ public enum Elemento {
 	
 	//SPRITES PERSONAGEM
 	// grama
-	PERSONAGEM("/personagemdown.png",false),
-	PERSONAGEMUP("/personagemup.png",false),
-	PERSONAGEMDOWN("/personagemdown.png",false),
-	PERSONAGEMLEFT("/personagemleft.png",false),
-	PERSONAGEMRIGHT("/personagemright.png",false),
+	PERSONAGEM_GRAMA("/personagemdown.png",false),
+	PERSONAGEM_CIMA_GRAMA("/personagemup.png",false),
+	PERSONAGEM_BAIXO_GRAMA("/personagemdown.png",false),
+	PERSONAGEM_ESQUERDA_GRAMA("/personagemleft.png",false),
+	PERSONAGEM_DIREITA_GRAMA("/personagemright.png",false),
 	// agua
-	PERSONAGEMUPWATER("/personagemupwater.png",false),
-	PERSONAGEMDOWNWATER("/personagemdownwater.png",false),
-	PERSONAGEMRIGHTWATER("/personagemrightwater.png",false),
-	PERSONAGEMLEFTWATER("/personagemleftwater.png",false),
+	PERSONAGEM_CIMA_AGUA("/personagemupwater.png",false),
+	PERSONAGEM_BAIXO_AGUA("/personagemdownwater.png",false),
+	PERSONAGEM_ESQUERDA_AGUA("/personagemrightwater.png",false),
+	PERSONAGEM_DIREITA_AGUA("/personagemleftwater.png",false),
 	// terra
-	PERSONAGEMUPDIRTY("/personagemupdirty.jpg",false),
-	PERSONAGEMDOWNDIRTY("/personagemdowndirty.jpg",false),
-	PERSONAGEMLEFTDIRTY("/personagemleftdirty.jpg",false),
-	PERSONAGEMRIGHTDIRTY("/personagemrightdirty.jpg",false),
+	PERSONAGEM_CIMA_TERRA("/personagemupdirty.jpg",false),
+	PERSONAGEM_BAIXO_TERRA("/personagemdowndirty.jpg",false),
+	PERSONAGEM_ESQUERDA_TERRA("/personagemleftdirty.jpg",false),
+	PERSONAGEM_DIREITA_TERRA("/personagemrightdirty.jpg",false),
 	// terra de caverna1
-	PERSONAGEMUPDIRTYCAVE1("/personagemupcave.jpg",false),
-	PERSONAGEMDOWNDIRTYCAVE1("/personagemdowncave.jpg",false),
-	PERSONAGEMLEFTDIRTYCAVE1("/personagemleftcave.jpg",false),
-	PERSONAGEMRIGHTDIRTYCAVE1("/personagemrightcave.jpg",false),
+	PERSONAGEM_CIMA_TERRA_CAVERNA("/personagemupcave.jpg",false),
+	PERSONAGEM_BAIXO_TERRA_CAVERNA("/personagemdowncave.jpg",false),
+	PERSONAGEM_ESQUERDA_TERRA_CAVERNA("/personagemleftcave.jpg",false),
+	PERSONAGEM_DIREITA_TERRA_CAVERNA("/personagemrightcave.jpg",false),
 	// terra de caverna2
-	PERSONAGEMUPDIRTYCAVE2("/maca.png",false),
-	PERSONAGEMDOWNDIRTYCAVE2("/maca.png",false),
-	PERSONAGEMLEFTDIRTYCAVE2("/maca.png",false),
-	PERSONAGEMRIGHTDIRTYCAVE2("/maca.png",false),
+	PERSONAGEM_CIMA_TERRA2_CAVERNA("/maca.png",false),
+	PERSONAGEM_BAIXO_TERRA2_CAVERNA("/maca.png",false),
+	PERSONAGEM_ESQUERDA_TERRA2_CAVERNA("/maca.png",false),
+	PERSONAGEM_DIREITA_TERRA2_CAVERNA("/maca.png",false),
 	// pedra
-	PERSONAGEMUPSTONE("/personagemupstone.jpg",false),
-	PERSONAGEMDOWNSTONE("/personagemdownstone.jpg",false),
-	PERSONAGEMLEFTSTONE("/personagemleftstone.jpg",false),
-	PERSONAGEMRIGHTSTONE("/personagemrightstone.jpg",false),
+	PERSONAGEM_CIMA_PEDRA("/personagemupstone.jpg",false),
+	PERSONAGEM_BAIXO_PEDRA("/personagemdownstone.jpg",false),
+	PERSONAGEM_ESQUERDA_PEDRA("/personagemleftstone.jpg",false),
+	PERSONAGEM_DIREITA_PEDRA("/personagemrightstone.jpg",false),
 	
 	//DEMAIS ELEMENTOS
 	PORTAL("/portal2.png",true),
